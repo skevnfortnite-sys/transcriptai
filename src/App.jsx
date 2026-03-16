@@ -51,7 +51,7 @@ const T = {
   shadowLg:"0 20px 60px rgba(0,0,0,0.12),0 4px 16px rgba(0,0,0,0.06)",
   shadow3d:"0 8px 0 rgba(0,0,0,0.15),0 12px 30px rgba(0,0,0,0.12)",
 }
-const mono = { fontFamily:"'DM Mono',monospace" }
+const mono = { fontFamily:"DM Mono,monospace" }
 const FREE_LIMIT = 3
 const LANGS = ["English","Español","Deutsch","Italiano","Português","中文","日本語","العربية"]
 const ADMIN_PASSWORD = "admin2025"
@@ -267,1048 +267,53 @@ function LiveCounter({adminMin=100,adminMax=2000}){
 function ProfilePage({setView,isPro,usageCount,user,onLogout}){
   const [name,setName]=useState(user?.name||"")
   const [email,setEmail]=useState(user?.email||"")
-  const [bio,setBio]=useState("")
   const [saved,setSaved]=useState(false)
-  const [avatarColor,setAvatarColor]=useState("#0A0A0A")
-  const colors=["#0A0A0A","#6366F1","#F97316","#22C55E","#EF4444","#8B5CF6","#F59E0B","#EC4899"]
 
   async function save(){
     if(user?.id&&user?.token){
-      await sb("profiles?id=eq."+user.id,{method:"PATCH",headers:{"Prefer":"return=minimal","Authorization":`Bearer ${user.token}`},body:JSON.stringify({name,email})})
-      const s=JSON.parse(localStorage.getItem("tai_session") || "{}");localStorage.setItem("tai_session",JSON.stringify({...s,name,email}))
+      await sb("profiles?id=eq."+user.id,{method:"PATCH",headers:{"Prefer":"return=minimal","Authorization":"Bearer "+user.token},body:JSON.stringify({name,email})})
+      const s=JSON.parse(localStorage.getItem("tai_session")||"{}");localStorage.setItem("tai_session",JSON.stringify({...s,name,email}))
     }
     setSaved(true);setTimeout(()=>setSaved(false),2000)
   }
-  function Field({label,value,onChange,multiline}){
-    const [f,setF]=useState(false)
-    const base={fontFamily:"'Inter',sans-serif",width:"100%",background:T.bg,border:`1.5px solid ${f?T.text:T.border}`,borderRadius:9,color:T.text,fontSize:14,outline:"none",transition:"all 0.15s",boxShadow:f?"0 4px 0 rgba(0,0,0,0.08)":"none"}
-    return(
-      <div style={{marginBottom:"1.125rem"}}>
-        <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>{label}</p>
-        {multiline
-          ?<textarea value={value} onChange={e=>onChange(e.target.value)} onFocus={()=>setF(true)} onBlur={()=>setF(false)} style={{...base,padding:"10px 14px",minHeight:80,resize:"none"}}/>
-          :<input value={value} onChange={e=>onChange(e.target.value)} onFocus={()=>setF(true)} onBlur={()=>setF(false)} style={{...base,height:44,padding:"0 14px"}}/>
-        }
-      </div>
-    )
-  }
+
+  const inputStyle={width:"100%",background:T.bg,border:"1.5px solid "+T.border,borderRadius:9,color:T.text,fontSize:14,fontFamily:"Inter,sans-serif",padding:"0 14px",height:46,outline:"none"}
+
   return(
     <div style={{minHeight:"100vh",background:T.bg}}>
       <div style={{maxWidth:820,margin:"0 auto",padding:"2.5rem 2rem"}}>
-        <div style={{marginBottom:"2rem",paddingBottom:"1.25rem",borderBottom:`1px solid ${T.border}`}}>
+        <div style={{marginBottom:"2rem",paddingBottom:"1.25rem",borderBottom:"1px solid "+T.border}}>
           <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:1.5,marginBottom:5,...mono}}>Mon compte</p>
           <h1 style={{fontSize:26,fontWeight:800,color:T.text,letterSpacing:-1.2}}>Profil</h1>
         </div>
 
-        {/* Avatar */}
-        <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:14,padding:"1.75rem",marginBottom:12,boxShadow:T.shadow}}>
-          <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:"1.25rem"}}>Avatar</p>
-          <div style={{display:"flex",alignItems:"center",gap:20}}>
-            <div style={{width:72,height:72,borderRadius:"50%",background:avatarColor,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 6px 0 rgba(0,0,0,0.2)",flexShrink:0}}>
-              <span style={{color:"#fff",fontSize:24,fontWeight:800}}>{name.split(" ").map(w=>w[0]).join("").slice(0,2)}</span>
-            </div>
-            <div>
-              <p style={{fontSize:13,color:T.textSec,marginBottom:10}}>Choisissez une couleur</p>
-              <div style={{display:"flex",gap:8}}>
-                {colors.map(col=>(
-                  <div key={col} onClick={()=>setAvatarColor(col)} style={{width:24,height:24,borderRadius:"50%",background:col,cursor:"pointer",border:`2px solid ${avatarColor===col?T.text:"transparent"}`,boxShadow:avatarColor===col?"0 3px 0 rgba(0,0,0,0.2)":"none",transition:"all 0.15s"}}/>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Info */}
-        <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:14,padding:"1.75rem",marginBottom:12,boxShadow:T.shadow}}>
+        <div style={{background:T.bgWhite,border:"1px solid "+T.border,borderRadius:14,padding:"1.75rem",marginBottom:12,boxShadow:T.shadow}}>
           <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:"1.25rem"}}>Informations</p>
-          <Field label="Nom complet" value={name} onChange={setName}/>
-          <Field label="Adresse email" value={email} onChange={setEmail}/>
-          <Field label="Bio" value={bio} onChange={setBio} multiline/>
-          <DarkBtn onClick={save} style={{boxShadow:T.shadow3d}}>
-            {saved?"✓ Sauvegardé !":"Sauvegarder les modifications"}
-          </DarkBtn>
+          <div style={{marginBottom:"1rem"}}>
+            <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Nom complet</p>
+            <input value={name} onChange={e=>setName(e.target.value)} style={inputStyle}/>
+          </div>
+          <div style={{marginBottom:"1.25rem"}}>
+            <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Adresse email</p>
+            <input value={email} onChange={e=>setEmail(e.target.value)} type="email" style={inputStyle}/>
+          </div>
+          <DarkBtn onClick={save} style={{boxShadow:T.shadow3d}}>{saved?"Sauvegarde":"Sauvegarder"}</DarkBtn>
         </div>
 
-        {/* Plan */}
-        <div style={{background:isPro?T.text:T.bgWhite,border:`1px solid ${isPro?"transparent":T.border}`,borderRadius:14,padding:"1.5rem",boxShadow:isPro?"0 8px 0 rgba(0,0,0,0.25),0 16px 40px rgba(0,0,0,0.12)":T.shadow,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+        <div style={{background:isPro?T.text:T.bgWhite,border:"1px solid "+(isPro?"transparent":T.border),borderRadius:14,padding:"1.5rem",boxShadow:isPro?"0 8px 0 rgba(0,0,0,0.25)":T.shadow,display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:12}}>
           <div>
             <p style={{fontSize:12,color:isPro?"rgba(255,255,255,0.5)":T.textTer,marginBottom:4}}>Plan actuel</p>
-            <p style={{fontSize:18,fontWeight:800,color:isPro?"#fff":T.text}}>{isPro?"⭐ Plan Pro":"Plan Gratuit"}</p>
-            <p style={{fontSize:12,color:isPro?"rgba(255,255,255,0.5)":T.textSec,marginTop:2}}>{isPro?"5€/mois · Actif":`${Math.max(3-usageCount,0)} crédit(s) restant(s)`}</p>
+            <p style={{fontSize:18,fontWeight:800,color:isPro?"#fff":T.text}}>{isPro?"Plan Pro":"Plan Gratuit"}</p>
+            <p style={{fontSize:12,color:isPro?"rgba(255,255,255,0.5)":T.textSec,marginTop:2}}>{isPro?"5/mois actif":Math.max(3-usageCount,0)+" credit(s) restant(s)"}</p>
           </div>
-          {!isPro&&<DarkBtn style={{boxShadow:T.shadow3d}}>Passer au Pro →</DarkBtn>}
+          {!isPro&&<DarkBtn style={{boxShadow:T.shadow3d}}>Passer au Pro</DarkBtn>}
         </div>
-        <button onClick={onLogout} style={{fontFamily:"'Inter',sans-serif",marginTop:"1.5rem",height:40,padding:"0 20px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:9,fontSize:13,fontWeight:500,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}>
-          ↩ Se déconnecter
-        </button>
-        </div>
-      </div>
-    </div>
-  )
-}
 
-/* ═══════════════════════════════════════
-   FAKE USERS DB (for admin)
-═══════════════════════════════════════ */
-const INITIAL_USERS = []
-const INITIAL_REVIEWS = []
-
-/* ═══════════════════════════════════════
-   PRIMITIVES
-═══════════════════════════════════════ */
-function DarkBtn({children,onClick,disabled,full,size="md",style:sx={}}){
-  const p={sm:{h:34,px:14,fs:12},md:{h:42,px:20,fs:14},lg:{h:52,px:28,fs:15}}[size]
-  return(
-    <button onClick={onClick} disabled={disabled} className="btn-dark" style={{
-      fontFamily:"'Inter',sans-serif",height:p.h,padding:`0 ${p.px}px`,fontSize:p.fs,
-      fontWeight:600,borderRadius:9,background:T.text,color:"#fff",border:"none",
-      cursor:disabled?"not-allowed":"pointer",opacity:disabled?0.45:1,
-      display:"inline-flex",alignItems:"center",justifyContent:"center",gap:8,
-      width:full?"100%":"auto",...sx
-    }}>{children}</button>
-  )
-}
-function OutlineBtn({children,onClick,size="md",active,danger,style:sx={}}){
-  const p={sm:{h:30,px:10,fs:11},md:{h:36,px:14,fs:13}}[size]||{h:36,px:14,fs:13}
-  return(
-    <button onClick={onClick} style={{
-      fontFamily:"'Inter',sans-serif",height:p.h,padding:`0 ${p.px}px`,fontSize:p.fs,
-      fontWeight:500,background:active?T.text:"transparent",
-      color:active?"#fff":danger?T.red:T.textSec,
-      border:`1px solid ${active?T.text:danger?T.red+"50":T.border}`,
-      borderRadius:7,cursor:"pointer",display:"inline-flex",alignItems:"center",gap:6,
-      transition:"all 0.15s",...sx
-    }}>{children}</button>
-  )
-}
-function SectionLabel({children}){
-  return <p style={{fontSize:10,fontWeight:700,letterSpacing:2,textTransform:"uppercase",color:T.textTer,marginBottom:"0.875rem",...mono}}>{children}</p>
-}
-function Logo({onClick}){
-  return(
-    <div onClick={onClick} style={{display:"flex",alignItems:"center",gap:9,cursor:"pointer",userSelect:"none"}}>
-      <div style={{
-        width:30,height:30,background:T.text,borderRadius:8,
-        display:"flex",alignItems:"center",justifyContent:"center",
-        boxShadow:"0 3px 0 rgba(0,0,0,0.3),0 6px 14px rgba(0,0,0,0.15)",
-        transform:"perspective(200px) rotateX(8deg)"
-      }}>
-        <span style={{color:"#fff",fontWeight:800,fontSize:14}}>T</span>
-      </div>
-      <span style={{fontSize:16,fontWeight:700,color:T.text,letterSpacing:-0.3}}>Transcript<span style={{color:"#555"}}>IA</span></span>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════
-   CREDIT RESET TIMER
-═══════════════════════════════════════ */
-function CreditResetTimer(){
-  // Credits reset every 24h from first use — simulate midnight reset
-  const [timeLeft,setTimeLeft]=useState(()=>{
-    const now=new Date()
-    const midnight=new Date(now)
-    midnight.setHours(24,0,0,0)
-    return Math.floor((midnight-now)/1000)
-  })
-  useEffect(()=>{
-    const iv=setInterval(()=>setTimeLeft(p=>Math.max(0,p-1)),1000)
-    return()=>clearInterval(iv)
-  },[])
-  const h=Math.floor(timeLeft/3600)
-  const m=Math.floor((timeLeft%3600)/60)
-  const s=timeLeft%60
-  const pad=n=>String(n).padStart(2,"0")
-  const pct=((86400-timeLeft)/86400)*100
-  return(
-    <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",marginBottom:"1.5rem",textAlign:"left"}}>
-      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10}}>
-        <p style={{fontSize:12,fontWeight:600,color:T.textSec}}>⏳ Rechargement des crédits gratuits</p>
-        <div style={{display:"flex",gap:6}}>
-          {[[h,"h"],[m,"m"],[s,"s"]].map(([v,u])=>(
-            <div key={u} style={{textAlign:"center",background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:7,padding:"4px 8px",minWidth:38}}>
-              <p style={{fontSize:16,fontWeight:800,color:T.text,...mono,letterSpacing:-0.5}}>{pad(v)}</p>
-              <p style={{fontSize:9,color:T.textTer,textTransform:"uppercase",letterSpacing:1}}>{u}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div style={{background:T.border,borderRadius:100,height:5,overflow:"hidden"}}>
-        <div style={{height:"100%",width:`${pct}%`,background:`linear-gradient(90deg,${T.text},#555)`,borderRadius:100,transition:"width 1s linear"}}/>
-      </div>
-      <p style={{fontSize:11,color:T.textTer,marginTop:6}}>Vos 3 crédits gratuits se rechargent automatiquement toutes les 24h.</p>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════
-   PAYWALL MODAL (nice CTA, no nagging)
-═══════════════════════════════════════ */
-function PaywallModal({onClose,onSignup}){
-  return(
-    <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(10,10,10,0.6)",backdropFilter:"blur(12px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem",animation:"fadeIn 0.2s ease"}}
-      onClick={e=>e.target===e.currentTarget&&onClose()}>
-      <div style={{background:T.bgWhite,borderRadius:20,padding:"0",width:"100%",maxWidth:460,position:"relative",overflow:"hidden",boxShadow:T.shadowLg,animation:"scaleIn 0.3s ease"}}>
-        {/* Top accent bar */}
-        <div style={{height:4,background:`linear-gradient(90deg,${T.text},#555,${T.textSec})`}}/>
-        <div style={{padding:"2.5rem 2.5rem 2rem"}}>
-          <button onClick={onClose} style={{position:"absolute",top:18,right:18,background:"transparent",border:"none",fontSize:18,cursor:"pointer",color:T.textTer,lineHeight:1}}>✕</button>
-
-          {/* Icon */}
-          <div style={{width:56,height:56,background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",marginBottom:"1.5rem",fontSize:26,boxShadow:T.shadow}}>✨</div>
-
-          <h2 style={{fontSize:24,fontWeight:800,color:T.text,letterSpacing:-0.8,marginBottom:"0.5rem"}}>Continuez sans limite</h2>
-          <p style={{fontSize:15,color:T.textSec,lineHeight:1.65,marginBottom:"2rem"}}>
-            Vous avez utilisé vos 3 transcriptions gratuites. Passez au Pro pour un accès illimité à toutes les fonctionnalités.
-          </p>
-          <CreditResetTimer/>
-
-          {/* Features */}
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:"2rem"}}>
-            {["Transcriptions illimitées","8 outils IA inclus","Traduction 8 langues","Chat IA sur vos vidéos","Historique complet","Export .srt"].map(f=>(
-              <div key={f} style={{display:"flex",alignItems:"center",gap:7,fontSize:13,color:T.textSec}}>
-                <div style={{width:16,height:16,borderRadius:"50%",background:T.text,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                  <span style={{color:"#fff",fontSize:9,fontWeight:700}}>✓</span>
-                </div>
-                {f}
-              </div>
-            ))}
-          </div>
-
-          {/* Price + CTA */}
-          <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",marginBottom:"1rem",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
-            <div>
-              <p style={{fontSize:12,color:T.textTer,marginBottom:3}}>Plan Pro</p>
-              <div style={{display:"flex",alignItems:"baseline",gap:3}}>
-                <span style={{fontSize:28,fontWeight:800,color:T.text,letterSpacing:-1}}>5€</span>
-                <span style={{fontSize:13,color:T.textTer}}>/mois</span>
-              </div>
-            </div>
-            <DarkBtn onClick={onSignup} size="lg" style={{padding:"0 28px"}}>Commencer →</DarkBtn>
-          </div>
-          <p style={{textAlign:"center",fontSize:12,color:T.textTer}}>Sans engagement · Annulation en un clic</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════
-   NAV
-═══════════════════════════════════════ */
-function Nav({view,setView,isLoggedIn,setShowAuth,isPro,logoClickCount,setLogoClickCount,user,onLogout}){
-  function handleLogoClick(){
-    const next=logoClickCount+1
-    setLogoClickCount(next)
-    if(next>=3){setView("admin");setLogoClickCount(0)}
-    else setView("landing")
-  }
-  useEffect(()=>{
-    function handleKey(e){
-      if(e.ctrlKey&&e.shiftKey&&e.key.toLowerCase()==="a"){setView("admin")}
-    }
-    window.addEventListener("keydown",handleKey)
-    return()=>window.removeEventListener("keydown",handleKey)
-  },[])
-  return(
-    <nav style={{position:"sticky",top:0,left:0,right:0,zIndex:100,background:"rgba(248,248,246,0.96)",backdropFilter:"blur(20px)",borderBottom:`1px solid ${T.border}`,display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0 2rem",height:56}}>
-      <div style={{display:"flex",alignItems:"center",gap:28}}>
-        <Logo onClick={handleLogoClick}/>
-        {isLoggedIn&&(
-          <div style={{display:"flex",gap:2}}>
-            {[["app","Transcrire"],["dashboard","Dashboard"]].map(([v,l])=>(
-              <button key={v} onClick={()=>setView(v)} style={{fontFamily:"'Inter',sans-serif",background:view===v?T.text:"transparent",color:view===v?"#fff":T.textSec,border:"none",fontSize:13,fontWeight:500,padding:"5px 12px",borderRadius:7,cursor:"pointer",transition:"all 0.15s"}}>{l}</button>
-            ))}
-          </div>
+        {onLogout&&(
+          <button onClick={onLogout} style={{marginTop:"1rem",height:40,padding:"0 20px",background:"transparent",border:"1px solid "+T.border,borderRadius:9,fontSize:13,fontWeight:500,color:T.red,cursor:"pointer",fontFamily:"Inter,sans-serif"}}>
+            Se deconnecter
+          </button>
         )}
-      </div>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        {!isLoggedIn&&(
-          <>
-            <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",fontSize:13,fontWeight:500,color:T.textSec,cursor:"pointer"}}>Fonctionnalités</button>
-            <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",fontSize:13,fontWeight:500,color:T.textSec,cursor:"pointer"}}>Tarifs</button>
-          </>
-        )}
-        {isLoggedIn?(
-          <div style={{display:"flex",alignItems:"center",gap:8}}>
-            {isPro&&<div style={{display:"flex",alignItems:"center",gap:5,background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:6,padding:"4px 10px"}}><div style={{width:5,height:5,borderRadius:"50%",background:T.green}}/><span style={{fontSize:11,fontWeight:700,color:"#166534"}}>PRO</span></div>}
-            <div style={{position:"relative",display:"flex",alignItems:"center",gap:6}}>
-              <div onClick={()=>setView("profile")} title={user?.name||"Profil"} style={{width:32,height:32,borderRadius:"50%",background:T.text,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 0 rgba(0,0,0,0.3)"}}>
-                <span style={{color:"#fff",fontSize:12,fontWeight:700}}>{user?.name?user.name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2):"SK"}</span>
-              </div>
-              <button onClick={onLogout} title="Se déconnecter" style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,padding:"5px 9px",fontSize:11,color:T.textSec,cursor:"pointer",fontWeight:500,fontFamily:"'Inter',sans-serif"}}>↩</button>
-            </div>
-          </div>
-        ):(
-          <div style={{display:"flex",gap:6}}>
-            <OutlineBtn onClick={()=>setShowAuth("login")}>Connexion</OutlineBtn>
-            <DarkBtn size="sm" onClick={()=>setShowAuth("signup")}>Essayer gratuitement</DarkBtn>
-          </div>
-        )}
-      </div>
-    </nav>
-  )
-}
-
-/* ═══════════════════════════════════════
-   FAQ COMPONENT
-═══════════════════════════════════════ */
-const FAQ_ITEMS = [
-  {q:"Combien de transcriptions puis-je générer gratuitement ?",a:"3 transcriptions complètes sont incluses gratuitement, sans carte bancaire requise. Ensuite, le plan Pro à 5€/mois ou 48€/an vous offre un accès illimité."},
-  {q:"Quelles langues sont supportées pour la traduction ?",a:"TranscriptIA supporte 8 langues : Anglais, Espagnol, Allemand, Italien, Portugais, Chinois, Japonais et Arabe. D'autres langues seront ajoutées prochainement."},
-  {q:"Est-ce que mes transcriptions sont sauvegardées ?",a:"Oui, avec le plan Pro votre historique complet est conservé indéfiniment. Vous pouvez retrouver, télécharger et partager toutes vos transcriptions depuis votre tableau de bord."},
-  {q:"Comment fonctionne le chatbot IA ?",a:"Après chaque transcription, vous pouvez poser n'importe quelle question sur le contenu de la vidéo. Le chatbot comprend le contexte complet et répond en français de façon précise."},
-  {q:"Puis-je annuler mon abonnement à tout moment ?",a:"Oui, vous pouvez annuler votre abonnement à tout moment en un clic depuis votre tableau de bord. Aucun engagement, aucune pénalité."},
-  {q:"Les vidéos privées fonctionnent-elles ?",a:"TranscriptIA fonctionne avec toutes les vidéos YouTube publiques. Les vidéos privées nécessitent d'être connecté au compte propriétaire — cette fonctionnalité est en cours de développement."},
-]
-function FaqItem({item}){
-  const [open,setOpen]=useState(false)
-  return(
-    <div style={{borderBottom:`1px solid ${T.border}`,overflow:"hidden"}}>
-      <button onClick={()=>setOpen(!open)} style={{width:"100%",display:"flex",justifyContent:"space-between",alignItems:"center",padding:"1.25rem 0",background:"transparent",border:"none",cursor:"pointer",textAlign:"left",gap:12}}>
-        <span style={{fontSize:15,fontWeight:600,color:T.text,fontFamily:"'Inter',sans-serif"}}>{item.q}</span>
-        <span style={{fontSize:20,color:T.textTer,transition:"transform 0.2s",transform:open?"rotate(45deg)":"rotate(0deg)",flexShrink:0,lineHeight:1}}>+</span>
-      </button>
-      {open&&<p style={{fontSize:14,color:T.textSec,lineHeight:1.8,paddingBottom:"1.25rem"}}>{item.a}</p>}
-    </div>
-  )
-}
-function FAQ(){
-  return(
-    <section style={{padding:"5.5rem 4rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
-      <div style={{maxWidth:900,margin:"0 auto"}}>
-        <div style={{textAlign:"center",marginBottom:"3rem"}}>
-          <SectionLabel>FAQ</SectionLabel>
-          <h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Questions fréquentes</h2>
-        </div>
-        {FAQ_ITEMS.map((item,i)=><FaqItem key={i} item={item}/>)}
-      </div>
-    </section>
-  )
-}
-
-/* ═══════════════════════════════════════
-   LANDING
-═══════════════════════════════════════ */
-function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews,adminCounterMin=100,adminCounterMax=2000}){
-  const [url,setUrl]=useState("")
-  const [focused,setFocused]=useState(false)
-
-  const [annual,setAnnual]=useState(false)
-  const useCases=[
-    {icon:"🎓",role:"Étudiants",desc:"Transformez cours et conférences YouTube en notes textuelles instantanées.",color:"#EEF2FF",accent:"#6366F1"},
-    {icon:"🎬",role:"Créateurs",desc:"Réutilisez vos vidéos : articles, posts, newsletters générés automatiquement.",color:"#FFF7ED",accent:"#F97316"},
-    {icon:"📰",role:"Journalistes",desc:"Transcrivez interviews et reportages. Retrouvez chaque citation horodatée.",color:"#F0FDF4",accent:"#22C55E"},
-    {icon:"🔬",role:"Chercheurs",desc:"Analysez des heures de contenu, extrayez les points clés, comparez.",color:"#FDF4FF",accent:"#A855F7"},
-  ]
-
-  return(
-    <div style={{minHeight:"100vh",paddingTop:56}}>
-
-      {/* ── HERO ── */}
-      <section className="grid-bg" style={{minHeight:"calc(100vh - 56px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"5rem 3rem 4rem",position:"relative",overflow:"hidden"}}>
-
-        {/* Radial vignette */}
-        <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 70% at 50% 45%,rgba(248,248,246,0) 0%,rgba(248,248,246,0.97) 100%)",pointerEvents:"none"}}/>
-
-        {/* Soft glow spots */}
-        <div style={{position:"absolute",top:"20%",left:"15%",width:320,height:320,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,0.06) 0%,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{position:"absolute",bottom:"25%",right:"12%",width:260,height:260,borderRadius:"50%",background:"radial-gradient(circle,rgba(249,115,22,0.07) 0%,transparent 70%)",pointerEvents:"none"}}/>
-
-        {/* ── 3D CARD TOP-RIGHT — transcript preview ── */}
-        <div className="float-a glow-card" style={{
-          position:"absolute",top:"8%",right:"5%",width:200,height:130,
-          background:T.bgWhite,borderRadius:16,border:`1px solid ${T.border}`,
-          padding:"1.1rem",pointerEvents:"none",
-          boxShadow:"0 8px 0 rgba(0,0,0,0.14),0 16px 40px rgba(0,0,0,0.1)"
-        }}>
-          {/* mini toolbar */}
-          <div style={{display:"flex",gap:4,marginBottom:10}}>
-            {["#FF5F57","#FEBC2E","#28C840"].map(col=><div key={col} style={{width:8,height:8,borderRadius:"50%",background:col}}/>)}
-          </div>
-          <div style={{width:"90%",height:5,background:"#0A0A0A",borderRadius:3,marginBottom:6,opacity:0.15}}/>
-          <div style={{width:"75%",height:4,background:T.surface,borderRadius:2,marginBottom:5}}/>
-          <div style={{width:"85%",height:4,background:T.surface,borderRadius:2,marginBottom:5}}/>
-          <div style={{width:"60%",height:4,background:T.surface,borderRadius:2,marginBottom:10}}/>
-          <div style={{display:"flex",gap:5}}>
-            <div style={{height:18,width:50,background:"#0A0A0A",borderRadius:5,opacity:0.9}}/>
-            <div style={{height:18,width:38,background:T.surface,borderRadius:5,border:`1px solid ${T.border}`}}/>
-          </div>
-        </div>
-
-        {/* ── 3D CARD BOTTOM-LEFT — summary pill ── */}
-        <div className="float-b" style={{
-          position:"absolute",bottom:"14%",left:"4%",width:170,height:90,
-          background:T.bgWhite,borderRadius:14,border:`1px solid ${T.border}`,
-          padding:"0.875rem",pointerEvents:"none",
-          boxShadow:"0 6px 0 rgba(0,0,0,0.12),0 12px 28px rgba(0,0,0,0.09)"
-        }}>
-          <div style={{display:"flex",alignItems:"center",gap:6,marginBottom:8}}>
-            <div style={{width:18,height:18,background:"#0A0A0A",borderRadius:5,display:"flex",alignItems:"center",justifyContent:"center"}}>
-              <span style={{color:"#fff",fontSize:9}}>✦</span>
-            </div>
-            <div style={{width:60,height:5,background:"#0A0A0A",borderRadius:2,opacity:0.2}}/>
-          </div>
-          <div style={{width:"95%",height:3,background:T.surface,borderRadius:2,marginBottom:4}}/>
-          <div style={{width:"80%",height:3,background:T.surface,borderRadius:2,marginBottom:4}}/>
-          <div style={{width:"88%",height:3,background:T.surface,borderRadius:2}}/>
-        </div>
-
-        {/* ── 3D CARD TOP-LEFT — stats ── */}
-        <div className="float-c" style={{
-          position:"absolute",top:"18%",left:"6%",width:130,height:76,
-          background:T.bgWhite,borderRadius:12,border:`1px solid ${T.border}`,
-          padding:"0.75rem",pointerEvents:"none",
-          boxShadow:"0 5px 0 rgba(0,0,0,0.12),0 10px 22px rgba(0,0,0,0.08)"
-        }}>
-          <div style={{fontSize:9,color:T.textTer,fontFamily:"'DM Mono',monospace",textTransform:"uppercase",letterSpacing:0.8,marginBottom:4}}>Précision</div>
-          <div style={{fontSize:22,fontWeight:800,color:T.text,letterSpacing:-1,fontFamily:"'DM Mono',monospace",lineHeight:1}}>98%</div>
-          <div style={{marginTop:6,background:T.surface,borderRadius:100,height:3,overflow:"hidden"}}>
-            <div style={{width:"98%",height:"100%",background:"#22C55E",borderRadius:100}}/>
-          </div>
-        </div>
-
-        {/* ── 3D CARD BOTTOM-RIGHT — language badge ── */}
-        <div className="float-a" style={{
-          position:"absolute",bottom:"22%",right:"6%",width:110,height:60,
-          background:"#0A0A0A",borderRadius:12,
-          padding:"0.75rem",pointerEvents:"none",
-          boxShadow:"0 5px 0 rgba(0,0,0,0.35),0 10px 24px rgba(0,0,0,0.25)",
-          animationDelay:"2s"
-        }}>
-          <div style={{fontSize:9,color:"rgba(255,255,255,0.45)",fontFamily:"'DM Mono',monospace",marginBottom:4}}>LANGUE</div>
-          <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
-            {["FR","EN","ES","DE"].map(l=>(
-              <span key={l} style={{fontSize:8,fontWeight:700,color:l==="FR"?"#0A0A0A":"rgba(255,255,255,0.5)",background:l==="FR"?"#fff":"rgba(255,255,255,0.08)",padding:"1px 5px",borderRadius:3,fontFamily:"'DM Mono',monospace"}}>{l}</span>
-            ))}
-          </div>
-        </div>
-
-        {/* ── DOTS GRID decoration ── */}
-        <div style={{position:"absolute",top:"35%",right:"2%",display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,pointerEvents:"none",opacity:0.3}}>
-          {Array.from({length:16}).map((_,i)=>(
-            <div key={i} style={{width:4,height:4,borderRadius:"50%",background:T.text,animation:`dotPulse 2s ease ${(i*0.15)%2}s infinite`}}/>
-          ))}
-        </div>
-        <div style={{position:"absolute",bottom:"30%",left:"1%",display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8,pointerEvents:"none",opacity:0.2}}>
-          {Array.from({length:9}).map((_,i)=>(
-            <div key={i} style={{width:4,height:4,borderRadius:"50%",background:T.text,animation:`dotPulse 2.4s ease ${(i*0.2)%2}s infinite`}}/>
-          ))}
-        </div>
-
-        {/* ── CENTER CONTENT ── */}
-        <div style={{maxWidth:860,width:"100%",textAlign:"center",position:"relative",zIndex:2,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center"}}>
-          {/* Status pill */}
-          <div className="fade-up" style={{display:"inline-flex",alignItems:"center",gap:8,background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:100,padding:"6px 18px",fontSize:12,fontWeight:500,color:T.textSec,marginBottom:"2rem",boxShadow:"0 3px 0 rgba(0,0,0,0.08),0 6px 16px rgba(0,0,0,0.05)"}}>
-            <span style={{width:7,height:7,borderRadius:"50%",background:T.green,display:"inline-block",boxShadow:"0 0 6px rgba(34,197,94,0.6)"}}/>
-            YouTube en texte en quelques secondes
-          </div>
-
-          {/* Main headline */}
-          <h1 className="fade-up-d1" style={{fontSize:"clamp(3rem,8vw,5.2rem)",fontWeight:900,lineHeight:1.06,letterSpacing:-3.5,marginBottom:"1.5rem"}}>
-            <span style={{color:T.text}}>Transcrivez n'importe</span><br/>
-            <span style={{
-              color:"transparent",
-              backgroundImage:`linear-gradient(135deg,${T.text} 0%,#555 50%,${T.textTer} 100%)`,
-              WebkitBackgroundClip:"text",backgroundClip:"text"
-            }}>quelle vidéo YouTube</span>
-          </h1>
-
-          <p className="fade-up-d2" style={{fontSize:16,color:T.textSec,lineHeight:1.8,maxWidth:600,margin:"0 auto 2.5rem",fontWeight:400}}>
-            Collez un lien, obtenez une transcription propre. Résumé IA automatique, traduction, chat — tout inclus.
-          </p>
-
-          {/* Input 3D */}
-          <div className="fade-up-d3" style={{
-            display:"flex",alignItems:"center",background:T.bgWhite,
-            border:`1.5px solid ${focused?T.text:T.border}`,borderRadius:14,
-            padding:"10px 10px 10px 24px",maxWidth:820,margin:"0 auto 1rem",
-            boxShadow:focused
-              ?"0 8px 0 rgba(0,0,0,0.14),0 14px 30px rgba(0,0,0,0.1)"
-              :"0 6px 0 rgba(0,0,0,0.10),0 10px 24px rgba(0,0,0,0.07)",
-            transform:focused?"translateY(-3px)":"translateY(0)",transition:"all 0.2s cubic-bezier(0.34,1.56,0.64,1)"
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" style={{flexShrink:0,marginRight:10}}>
-              <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.845v6.31a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" stroke={T.textTer} strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-            <input value={url} onChange={e=>setUrl(e.target.value)}
-              placeholder="Collez le lien YouTube ici..."
-              onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
-              onKeyDown={e=>e.key==="Enter"&&setView("app")}
-              style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:18,fontFamily:"'Inter',sans-serif",height:52}}/>
-            <DarkBtn onClick={()=>setView("app")} style={{height:54,padding:"0 28px",fontSize:16,borderRadius:11}}>Générer →</DarkBtn>
-          </div>
-
-          <p className="fade-up-d3" style={{fontSize:12,color:T.textTer}}>3 transcriptions gratuites · sans carte bancaire</p>
-
-          <div className="fade-up-d4" style={{display:"flex",justifyContent:"center",marginTop:"1.5rem"}}>
-            <LiveCounter adminMin={counterMin} adminMax={counterMax}/>
-          </div>
-
-          {/* Stats row */}
-          <div className="fade-up-d4" style={{display:"flex",justifyContent:"center",gap:"0",marginTop:"2.5rem",paddingTop:"2rem",borderTop:`1px solid ${T.border}`}}>
-            {[["12k+","vidéos traitées"],["98%","précision IA"],["< 10s","temps moyen"]].map(([n,l],i)=>(
-              <div key={n} style={{textAlign:"center",flex:1,padding:"0 1.5rem",borderRight:i<2?`1px solid ${T.border}`:"none"}}>
-                <div style={{fontSize:22,fontWeight:800,color:T.text,letterSpacing:-1,...mono}}>{n}</div>
-                <div style={{fontSize:11,color:T.textTer,marginTop:4,letterSpacing:0.3}}>{l}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── STEPS ── */}
-      <section style={{padding:"5.5rem 4rem",background:T.bg,borderTop:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
-        {/* bg decoration */}
-        <div style={{position:"absolute",top:-60,right:-60,width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,0.04) 0%,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{maxWidth:1160,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:"3.5rem"}}>
-            <SectionLabel>Comment ça marche</SectionLabel>
-            <h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>3 étapes simples</h2>
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16,position:"relative"}}>
-            {/* connecting dashed line */}
-            <div style={{position:"absolute",top:36,left:"20%",right:"20%",height:1,backgroundImage:`repeating-linear-gradient(90deg,${T.borderMid} 0,${T.borderMid} 6px,transparent 6px,transparent 12px)`,zIndex:0}}/>
-            {[
-              {icon:"🔗",n:"01",t:"Collez le lien",d:"Copiez l'URL de n'importe quelle vidéo YouTube",color:"#EEF2FF",ic:"#6366F1"},
-              {icon:"✨",n:"02",t:"Transcription IA",d:"Notre IA extrait et analyse le contenu en secondes",color:"#FFF7ED",ic:"#F97316"},
-              {icon:"⬇️",n:"03",t:"Utilisez & téléchargez",d:"Résumé auto, chat IA, export .txt et .srt",color:"#F0FDF4",ic:"#22C55E"},
-            ].map((s,i)=>(
-              <div key={s.n} className="card-3d" style={{
-                background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:18,
-                padding:"2rem 1.5rem",textAlign:"center",position:"relative",zIndex:1,
-                boxShadow:"0 6px 0 rgba(0,0,0,0.08),0 10px 24px rgba(0,0,0,0.05)"
-              }}>
-                {/* step number badge */}
-                <div style={{position:"absolute",top:14,right:14,fontSize:9,fontWeight:800,color:T.textTer,...mono,letterSpacing:1}}>{s.n}</div>
-                <div style={{width:58,height:58,background:s.color,borderRadius:16,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.25rem",fontSize:26,boxShadow:`0 5px 0 ${s.ic}30,0 8px 18px ${s.ic}20`}}>
-                  <span>{s.icon}</span>
-                </div>
-                <h3 style={{fontSize:15,fontWeight:700,color:T.text,marginBottom:8}}>{s.t}</h3>
-                <p style={{fontSize:13,color:T.textSec,lineHeight:1.7}}>{s.d}</p>
-                {/* bottom accent line */}
-                <div style={{position:"absolute",bottom:0,left:"20%",right:"20%",height:3,background:s.ic,borderRadius:"0 0 3px 3px",opacity:0.6}}/>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── USE CASES ── */}
-      <section style={{padding:"5.5rem 4rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
-        <div style={{maxWidth:1160,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:"3rem"}}><SectionLabel>Cas d'usage</SectionLabel><h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Fait pour tout le monde</h2></div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:14}}>
-            {useCases.map(u=>(
-              <div key={u.role} className="card-3d" style={{background:u.color,border:`1px solid ${T.border}`,borderRadius:16,padding:"2rem",boxShadow:T.shadow}}>
-                <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:"1rem"}}>
-                  <div style={{width:44,height:44,borderRadius:11,background:u.accent,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,boxShadow:`0 4px 0 ${u.accent}60`}}>{u.icon}</div>
-                  <h3 style={{fontSize:16,fontWeight:700,color:T.text}}>{u.role}</h3>
-                </div>
-                <p style={{fontSize:13,color:T.textSec,lineHeight:1.7}}>{u.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── REVIEWS ── */}
-      <section style={{padding:"5.5rem 4rem",background:T.bg,borderTop:`1px solid ${T.border}`}}>
-        <div style={{maxWidth:1160,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:"3rem"}}><SectionLabel>Témoignages</SectionLabel><h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Ils nous font confiance</h2></div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
-            {reviews.filter(r=>r.visible).map((r,i)=>{
-              const colors=["#6366F1","#F97316","#22C55E"]
-              return(
-                <div key={r.id} className="card-3d" style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:16,padding:"1.75rem",boxShadow:T.shadow}}>
-                  <div style={{display:"flex",marginBottom:"0.875rem"}}>{[1,2,3,4,5].map(s=><span key={s} style={{color:"#FBBF24",fontSize:13}}>★</span>)}</div>
-                  <p style={{fontSize:13,color:T.textSec,lineHeight:1.8,marginBottom:"1.25rem",fontStyle:"italic"}}>"{r.text}"</p>
-                  <div style={{display:"flex",alignItems:"center",gap:10,paddingTop:"1rem",borderTop:`1px solid ${T.border}`}}>
-                    <div style={{width:34,height:34,borderRadius:"50%",background:colors[i%colors.length],display:"flex",alignItems:"center",justifyContent:"center",boxShadow:`0 3px 0 ${colors[i%colors.length]}60`}}>
-                      <span style={{fontSize:11,fontWeight:700,color:"#fff"}}>{r.author.split(" ").map(w=>w[0]).join("").slice(0,2)}</span>
-                    </div>
-                    <div>
-                      <p style={{fontSize:13,fontWeight:600,color:T.text}}>{r.author}</p>
-                      <p style={{fontSize:11,color:T.textTer}}>{r.role}</p>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </section>
-
-      {/* ── PRICING ── */}
-      <section style={{padding:"5.5rem 4rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
-        <div style={{maxWidth:760,margin:"0 auto"}}>
-          <div style={{textAlign:"center",marginBottom:"2rem"}}><SectionLabel>Tarifs</SectionLabel><h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Simple et honnête</h2></div>
-          {/* Annual toggle */}
-          <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:12,marginBottom:"2.5rem"}}>
-            <span style={{fontSize:14,fontWeight:500,color:annual?T.textTer:T.text}}>Mensuel</span>
-            <div onClick={()=>setAnnual(!annual)} style={{width:48,height:26,borderRadius:100,background:annual?T.text:T.border,cursor:"pointer",position:"relative",transition:"background 0.2s",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.1)"}}>
-              <div style={{position:"absolute",top:3,left:annual?24:3,width:20,height:20,borderRadius:"50%",background:"#fff",transition:"left 0.2s",boxShadow:"0 2px 4px rgba(0,0,0,0.25)"}}/>
-            </div>
-            <span style={{fontSize:14,fontWeight:500,color:annual?T.text:T.textTer}}>Annuel</span>
-            {annual&&<span style={{fontSize:11,fontWeight:700,background:"#F0FDF4",color:T.green,padding:"3px 10px",borderRadius:20,border:"1px solid #BBF7D0"}}>-20% 🎉</span>}
-          </div>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
-            {[
-              {n:"Gratuit",p:"0€",per:"",f:["3 transcriptions","Export .txt","Interface complète"],hot:false,cta:"Commencer",stripeLink:null},
-              {n:"Pro",p:annual?"48€":"5€",per:annual?"/an":"/mois",f:["Transcriptions illimitées","Résumé automatique","Traduction 8 langues","Chat IA","Export .srt","Historique complet","Tags & favoris","Support prioritaire"],hot:true,cta:annual?"Passer au Pro Annuel":"Passer au Pro",stripeLink:annual?"https://buy.stripe.com/annual_link":"https://buy.stripe.com/monthly_link"},
-            ].map(pl=>(
-              <div key={pl.n} className="card-3d" style={{background:pl.hot?T.text:T.bgWhite,border:`1.5px solid ${pl.hot?T.text:T.border}`,borderRadius:16,padding:"2rem",position:"relative",boxShadow:pl.hot?"0 8px 0 rgba(0,0,0,0.25),0 16px 40px rgba(0,0,0,0.12)":T.shadow}}>
-                {pl.hot&&<div style={{position:"absolute",top:-11,right:14,background:T.orange,color:"#fff",fontSize:9,fontWeight:700,padding:"3px 12px",borderRadius:20,letterSpacing:0.5,boxShadow:"0 3px 8px rgba(249,115,22,0.4)"}}>RECOMMANDÉ</div>}
-                <p style={{fontSize:10,fontWeight:700,color:pl.hot?"rgba(255,255,255,0.4)":T.textTer,textTransform:"uppercase",letterSpacing:1.5,marginBottom:8,...mono}}>{pl.n}</p>
-                <div style={{display:"flex",alignItems:"baseline",gap:3,marginBottom:"1.5rem"}}>
-                  <span style={{fontSize:32,fontWeight:800,color:pl.hot?"#fff":T.text,letterSpacing:-1.5}}>{pl.p}</span>
-                  <span style={{fontSize:13,color:pl.hot?"rgba(255,255,255,0.4)":T.textTer}}>{pl.per}</span>
-                </div>
-                <div style={{display:"flex",flexDirection:"column",gap:9,marginBottom:"1.75rem"}}>
-                  {pl.f.map(f=>(
-                    <div key={f} style={{display:"flex",alignItems:"center",gap:8,fontSize:13,color:pl.hot?"rgba(255,255,255,0.75)":T.textSec}}>
-                      <div style={{width:16,height:16,borderRadius:"50%",background:pl.hot?"rgba(255,255,255,0.15)":"rgba(0,0,0,0.06)",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
-                        <span style={{fontSize:9,fontWeight:700,color:pl.hot?"#fff":T.text}}>✓</span>
-                      </div>{f}
-                    </div>
-                  ))}
-                </div>
-                {pl.hot
-                  ?<button onClick={()=>{if(pl.stripeLink)window.open(pl.stripeLink,"_blank");else setShowAuth("signup")}} style={{fontFamily:"'Inter',sans-serif",width:"100%",height:46,background:"#fff",color:T.text,border:"none",borderRadius:10,fontSize:14,fontWeight:700,cursor:"pointer",boxShadow:"0 3px 0 rgba(255,255,255,0.3)",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}><span>💳</span>{pl.cta}</button>
-                  :<OutlineBtn full onClick={()=>setShowAuth("signup")} style={{width:"100%",justifyContent:"center",height:44}}>{pl.cta}</OutlineBtn>
-                }
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FAQ ── */}
-      <FAQ/>
-
-      {/* ── FINAL CTA ── */}
-      <section className="grid-bg" style={{padding:"6rem 4rem",borderTop:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
-        <div style={{position:"absolute",inset:0,background:"rgba(248,248,246,0.6)",pointerEvents:"none"}}/>
-        <div style={{maxWidth:700,margin:"0 auto",textAlign:"center",position:"relative",zIndex:1}}>
-          <h2 style={{fontSize:"2.2rem",fontWeight:800,color:T.text,letterSpacing:-1.2,marginBottom:"1rem"}}>Prêt à commencer ?</h2>
-          <p style={{fontSize:15,color:T.textSec,lineHeight:1.7,marginBottom:"2.5rem"}}>Rejoignez des milliers d'utilisateurs qui transcrivent chaque jour.</p>
-          <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
-            <DarkBtn onClick={()=>setShowAuth("signup")} size="lg" style={{boxShadow:T.shadow3d}}>Essayer gratuitement →</DarkBtn>
-            <OutlineBtn onClick={()=>setView("app")} style={{height:52,padding:"0 24px",fontSize:15}}>Voir une démo</OutlineBtn>
-          </div>
-          <p style={{fontSize:12,color:T.textTer,marginTop:"1.5rem"}}>3 transcriptions gratuites · Sans carte bancaire</p>
-        </div>
-      </section>
-
-      {/* ── FOOTER ── */}
-      <footer style={{borderTop:`1px solid ${T.border}`,padding:"2rem",background:T.bgWhite,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
-        <Logo onClick={()=>{}}/>
-        <p style={{fontSize:12,color:T.textTer}}>© 2025 KEVININDUSTRIE · Tous droits réservés</p>
-        <div style={{display:"flex",gap:"1.5rem",alignItems:"center"}}>
-          <span onClick={()=>setView("mentions")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>Mentions légales</span>
-          <span onClick={()=>setView("cgu")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>CGU</span>
-          <span onClick={()=>setView("cgv")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>CGV</span>
-          <span onClick={()=>setView("rgpd")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>Confidentialité</span>
-          <a href="mailto:contact@transcriptia.app" style={{fontSize:12,color:T.textTer,textDecoration:"none"}}>Contact</a>
-          <span onClick={()=>setView("status")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>Statut</span>
-        </div>
-      </footer>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════
-   APP VIEW
-═══════════════════════════════════════ */
-function AppView({usageCount,setUsageCount,isPro,setShowAuth,transcripts,setTranscripts}){
-  // Demo data removed
-
-
-  const [url,setUrl]=useState("")
-  const [phase,setPhase]=useState("idle")
-  const [progress,setProg]=useState(100)
-  const [elapsed,setElapsed]=useState(0)
-  const [tx,setTx]=useState(null)
-  const [tab,setTab]=useState("transcript")
-  const [txTab,setTxTab]=useState("raw")
-  const [error,setError]=useState("")
-  const [copied,setCopied]=useState(false)
-  const [autoSummary,setAutoSummary]=useState(null)
-  const [autoSumLoading,setAutoSumLoad]=useState(false)
-  const [autoSumCopied,setAutoSumCopied]=useState(false)
-  const [showPaywall,setShowPaywall]=useState(false)
-  const elapsedRef=useRef()
-
-  const canGo=isPro||usageCount<FREE_LIMIT
-  useShortcuts({"ctrl+enter":()=>{if(url)generate()}})
-  useEffect(()=>{chatEndRef.current?.scrollIntoView({behavior:"smooth"})},[chatHistory])
-
-  async function generateAutoSummary(transcript){
-    setAutoSumLoad(true);setAutoSummary(null)
-    try{
-      const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:600,messages:[{role:"user",content:`Génère un résumé automatique structuré en français. Format:\n\n**En bref**\n[une phrase percutante]\n\n**Résumé**\n[3-4 phrases claires]\n\n**Points essentiels**\n- [point 1]\n- [point 2]\n- [point 3]\n\nTranscription:\n${transcript}`}]})})
-      const d=await r.json();setAutoSummary(d.content[0].text)
-    }catch{setAutoSummary("Erreur lors de la génération.")}
-    setAutoSumLoad(false)
-  }
-
-  async function generate(){
-    if(!url.trim()){setError("Collez une URL YouTube.");return}
-    if(!url.includes("youtube.com")&&!url.includes("youtu.be")){setError("URL YouTube invalide.");return}
-    if(!canGo){setShowPaywall(true);return}
-    setError("");setPhase("loading");setProg(0);setElapsed(0)
-    setAiOut(null);setAiTool(null);setChatHistory([]);setCitations([]);setTranslated(null);setAutoSummary(null)
-    const piv=setInterval(()=>setProg(p=>Math.min(p+7,90)),280)
-    elapsedRef.current=setInterval(()=>setElapsed(e=>e+1),1000)
-    try{
-      const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:`Génère une transcription réaliste (~400 mots) en français pour: ${url}\nRéponds UNIQUEMENT en JSON valide (sans backticks):\n{"title":"...","duration":"MM:SS","channel":"...","detectedLang":"Français","rawTranscript":"...","timestamped":[{"time":"0:00","text":"..."},{"time":"0:14","text":"..."},{"time":"0:30","text":"..."},{"time":"0:48","text":"..."},{"time":"1:06","text":"..."},{"time":"1:25","text":"..."},{"time":"1:44","text":"..."},{"time":"2:03","text":"..."},{"time":"2:24","text":"..."},{"time":"2:48","text":"..."}]}`}]})})
-      clearInterval(piv);clearInterval(elapsedRef.current);setProg(100)
-      const d=await r.json()
-      const parsed=JSON.parse(d.content[0].text.replace(/```json|```/g,"").trim())
-      setTx(parsed);setDetectedLang(parsed.detectedLang||"Français")
-      setTranscripts(prev=>[{id:Date.now(),url,...parsed,date:new Date().toLocaleDateString("fr-FR"),favorite:false,tags:[],shareId:`tx_${Date.now()}`},...prev])
-      setUsageCount(c=>c+1)
-      toast("Transcription générée !","success")
-      setTimeout(()=>{setPhase("done");generateAutoSummary(parsed.rawTranscript)},300)
-    }catch{
-      clearInterval(piv);clearInterval(elapsedRef.current)
-      setError("Erreur. Réessayez.");setPhase("idle");toast("Erreur","error")
-    }
-  }
-
-
-  function copy(text){navigator.clipboard?.writeText(text);setCopied(true);setTimeout(()=>setCopied(false),1400);toast("Copié !","info")}
-  function dl(ext){
-    if(!tx)return
-    const c=ext==="srt"?tx.timestamped.map((t,i)=>`${i+1}\n${t.time} --> ${tx.timestamped[i+1]?.time||"99:59"}\n${t.text}\n`).join("\n"):tx.rawTranscript
-    const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([c],{type:"text/plain"}));a.download=`${tx.title}.${ext}`;a.click()
-    toast(`Téléchargement .${ext}`,"info")
-  }
-  function dlPdf(){
-    if(!tx)return
-    const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><title>${tx.title}</title><style>
-      *{margin:0;padding:0;box-sizing:border-box}
-      body{font-family:'Helvetica Neue',Arial,sans-serif;color:#0A0A0A;padding:48px 56px;max-width:760px;margin:0 auto}
-      .header{border-bottom:2px solid #0A0A0A;padding-bottom:24px;margin-bottom:32px}
-      .logo{font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#888;margin-bottom:12px}
-      h1{font-size:26px;font-weight:800;line-height:1.2;letter-spacing:-0.5px;margin-bottom:8px}
-      .meta{font-size:13px;color:#666;font-family:'Courier New',monospace}
-      .badge{display:inline-block;background:#F2F2F0;border:1px solid #E4E4E0;border-radius:4px;padding:2px 8px;font-size:11px;font-weight:600;margin-right:6px}
-      .section{margin-bottom:36px}
-      .section-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#A0A0A8;margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid #E4E4E0;font-family:'Courier New',monospace}
-      .transcript{font-size:14px;line-height:1.9;color:#333}
-      .row{display:flex;gap:20px;margin-bottom:10px;align-items:flex-start}
-      .ts{font-size:11px;font-weight:700;color:#F97316;min-width:36px;margin-top:2px;font-family:'Courier New',monospace}
-      .footer{margin-top:48px;padding-top:20px;border-top:1px solid #E4E4E0;font-size:11px;color:#A0A0A8;display:flex;justify-content:space-between;font-family:'Courier New',monospace}
-    </style></head><body>
-      <div class="header">
-        <div class="logo">TranscriptIA</div>
-        <h1>${tx.title}</h1>
-        <div class="meta">
-          <span class="badge">${tx.channel}</span>
-          <span class="badge">${tx.duration}</span>
-          <span class="badge">${tx.detectedLang||"Français"}</span>
-        </div>
-      </div>
-      <div class="section">
-        <div class="section-title">Transcription complète</div>
-        <div class="transcript">${tx.rawTranscript.split('\n').join('<br>')}</div>
-      </div>
-      <div class="section">
-        <div class="section-title">Version horodatée</div>
-        ${tx.timestamped.map(t=>`<div class="row"><span class="ts">${t.time}</span><span class="transcript">${t.text}</span></div>`).join("")}
-      </div>
-      <div class="footer"><span>TranscriptIA · transcriptai.app</span><span>Généré le ${new Date().toLocaleDateString("fr-FR")}</span></div>
-    </body></html>`
-    const blob=new Blob([html],{type:"text/html"})
-    const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${tx.title}.html`;a.click()
-    toast("Export HTML/PDF prêt à imprimer","success")
-  }
-  function toggleFav(){if(!tx)return;setTranscripts(prev=>prev.map(t=>t.title===tx.title?{...t,favorite:!t.favorite}:t));toast("Favori mis à jour","info")}
-  const currentMeta=transcripts.find(t=>t.title===tx?.title)
-  // Only transcript tab now
-
-  function renderSummaryLine(line,i){
-    if(!line)return null
-    if(line.startsWith("**")&&line.endsWith("**"))return <p key={i} style={{fontWeight:700,color:T.text,fontSize:11,textTransform:"uppercase",letterSpacing:0.8,marginBottom:5,marginTop:i>0?14:0}}>{line.replace(/\*\*/g,"")}</p>
-    if(line.startsWith("- "))return <div key={i} style={{display:"flex",gap:8,alignItems:"flex-start",marginBottom:5}}><span style={{color:T.text,fontWeight:700,marginTop:2,flexShrink:0}}>·</span><span style={{fontSize:13,color:T.textSec,lineHeight:1.65}}>{line.slice(2)}</span></div>
-    if(line.trim())return <p key={i} style={{fontSize:13,color:T.textSec,lineHeight:1.75,marginBottom:4}}>{line}</p>
-    return null
-  }
-
-  return(
-    <div style={{minHeight:"100vh",background:T.bg}}>
-      {showPaywall&&<PaywallModal onClose={()=>setShowPaywall(false)} onSignup={()=>{setShowPaywall(false)}}/>}
-
-      {/* URL BAR */}
-      <div style={{background:T.bgWhite,borderBottom:`1px solid ${T.border}`,padding:"0.875rem 2rem",boxShadow:"0 1px 0 rgba(0,0,0,0.04)"}}>
-        <div style={{maxWidth:1100,margin:"0 auto"}}>
-          <div style={{display:"flex",gap:8,alignItems:"center",background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"5px 5px 5px 14px",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.04)"}}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{flexShrink:0,marginRight:4}}>
-              <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.845v6.31a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" stroke={T.textTer} strokeWidth="1.5" strokeLinecap="round"/>
-            </svg>
-            <input value={url} onChange={e=>setUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..."
-              onKeyDown={e=>e.key==="Enter"&&generate()}
-              style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",height:36}}/>
-            <DarkBtn onClick={generate} disabled={phase==="loading"} style={{height:36,padding:"0 16px",fontSize:13,boxShadow:"0 2px 0 rgba(0,0,0,0.25)"}}>
-              {phase==="loading"?"Traitement…":"Transcrire →"}
-            </DarkBtn>
-          </div>
-          {error&&<p style={{color:T.red,fontSize:11,marginTop:5,...mono}}>{error}</p>}
-          <div style={{display:"flex",justifyContent:"flex-end",marginTop:4}}>
-            <p style={{fontSize:10,color:T.textTer,...mono}}>Ctrl+Enter pour lancer</p>
-          </div>
-        </div>
-      </div>
-
-      <div style={{maxWidth:1100,margin:"0 auto",padding:"1.5rem 2rem"}}>
-
-        {/* IDLE */}
-        {phase==="idle"&&(
-          <div className="grid-bg" style={{border:`1px solid ${T.border}`,borderRadius:16,padding:"5rem 2rem",textAlign:"center",animation:"fadeUp 0.4s ease",boxShadow:T.shadow}}>
-            <div style={{width:52,height:52,background:T.text,borderRadius:13,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.25rem",fontSize:22,boxShadow:T.shadow3d}}>🎬</div>
-            <p style={{color:T.textSec,fontSize:15,fontWeight:600,marginBottom:4}}>Prêt à transcrire</p>
-            <p style={{color:T.textTer,fontSize:13}}>Collez une URL YouTube · <span style={{color:T.text,fontWeight:600,...mono}}>Ctrl+Enter</span></p>
-          </div>
-        )}
-
-        {/* LOADING */}
-        {phase==="loading"&&(
-          <div style={{border:`1px solid ${T.border}`,borderRadius:16,padding:"3.5rem 2.5rem",textAlign:"center",background:T.bgWhite,boxShadow:T.shadowMd,animation:"fadeUp 0.3s ease"}}>
-            <div style={{width:56,height:56,background:T.surface,border:`1px solid ${T.border}`,borderRadius:14,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 1.5rem",fontSize:24,boxShadow:T.shadow}}>⚡</div>
-            <p style={{fontSize:17,fontWeight:700,color:T.text,marginBottom:4}}>Traitement en cours</p>
-            <p style={{fontSize:13,color:T.textSec,marginBottom:"2rem"}}>Extraction et analyse de la vidéo…</p>
-            <div style={{maxWidth:360,margin:"0 auto 0.75rem"}}>
-              <div style={{background:T.border,borderRadius:100,height:8,overflow:"hidden",marginBottom:6,boxShadow:"inset 0 1px 3px rgba(0,0,0,0.08)"}}>
-                <div style={{height:"100%",width:`${progress}%`,background:`linear-gradient(90deg,${T.text},#555)`,borderRadius:100,transition:"width 0.3s ease",position:"relative",overflow:"hidden"}}>
-                  <div style={{position:"absolute",inset:0,background:"linear-gradient(90deg,transparent,rgba(255,255,255,0.3),transparent)",animation:"shimmer 1.4s infinite",backgroundSize:"200% 100%"}}/>
-                </div>
-              </div>
-              <div style={{display:"flex",justifyContent:"space-between"}}>
-                <span style={{fontSize:11,color:T.textTer,...mono}}>{progress}%</span>
-                <span style={{fontSize:11,color:T.orange,fontWeight:600,...mono,animation:"ticker 1s infinite"}}>⏱ {elapsed}s</span>
-              </div>
-            </div>
-            <div style={{display:"flex",justifyContent:"center",gap:20,marginTop:"1.25rem"}}>
-              {[{l:"Connexion",done:progress>20},{l:"Extraction",done:progress>55},{l:"Analyse",done:progress>85}].map(s=>(
-                <div key={s.l} style={{display:"flex",alignItems:"center",gap:5,fontSize:11,color:s.done?T.text:T.textTer}}>
-                  <div style={{width:16,height:16,borderRadius:"50%",background:s.done?T.text:T.border,display:"flex",alignItems:"center",justifyContent:"center",boxShadow:s.done?"0 2px 0 rgba(0,0,0,0.2)":"none"}}>
-                    {s.done?<span style={{color:"#fff",fontSize:9}}>✓</span>:<div style={{width:5,height:5,borderRadius:"50%",background:T.borderMid}}/>}
-                  </div>{s.l}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* DONE */}
-        {phase==="done"&&tx&&(
-          <div style={{display:"flex",flexDirection:"column",gap:10,animation:"fadeUp 0.4s ease"}}>
-            {/* Meta */}
-            <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1rem 1.25rem",display:"flex",justifyContent:"space-between",alignItems:"center",boxShadow:T.shadow}}>
-              <div>
-                <p style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:2}}>{tx.title}</p>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <p style={{fontSize:12,color:T.textSec}}>{tx.channel} · {tx.duration}</p>
-                  {detectedLang&&<span style={{fontSize:10,fontWeight:600,background:"#EFF6FF",color:T.blue,padding:"2px 8px",borderRadius:5,border:"1px solid #BFDBFE",...mono}}>🌐 {detectedLang}</span>}
-                  {isPro&&<span style={{fontSize:10,fontWeight:700,background:"#F0FDF4",color:"#166534",padding:"2px 8px",borderRadius:5,border:"1px solid #BBF7D0",...mono}}>✓ PRO</span>}
-                </div>
-              </div>
-              <div style={{display:"flex",gap:5,alignItems:"center"}}>
-                <button onClick={toggleFav} style={{background:"transparent",border:"none",cursor:"pointer",fontSize:16,opacity:currentMeta?.favorite?1:0.25,transition:"opacity 0.2s"}}>⭐</button>
-                <button onClick={()=>copy(`https://transcriptai.app/share/${currentMeta?.shareId}`)} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:`1px solid ${T.border}`,borderRadius:6,padding:"4px 10px",color:T.textSec,fontSize:11,cursor:"pointer"}}>🔗</button>
-                <OutlineBtn size="sm" onClick={()=>dl("txt")}>↓ .txt</OutlineBtn>
-                <OutlineBtn size="sm" onClick={()=>dl("srt")}>↓ .srt</OutlineBtn>
-                <OutlineBtn size="sm" onClick={dlPdf}>↓ PDF</OutlineBtn>
-              </div>
-            </div>
-
-            {/* AUTO SUMMARY */}
-            <div style={{background:T.bgWhite,border:`1.5px solid ${T.border}`,borderRadius:12,overflow:"hidden",boxShadow:T.shadowMd}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",padding:"0.875rem 1.25rem",borderBottom:`1px solid ${T.border}`,background:"linear-gradient(135deg,#F8F8F6,#FFFFFF)"}}>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{width:30,height:30,background:T.text,borderRadius:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,boxShadow:"0 3px 0 rgba(0,0,0,0.2)"}}>✦</div>
-                  <div>
-                    <p style={{fontSize:13,fontWeight:700,color:T.text}}>Résumé automatique</p>
-                    <p style={{fontSize:11,color:T.textTer}}>Généré par IA dès la transcription</p>
-                  </div>
-                </div>
-                {autoSummary&&!autoSumLoading&&(
-                  <button onClick={()=>{navigator.clipboard?.writeText(autoSummary);setAutoSumCopied(true);setTimeout(()=>setAutoSumCopied(false),1400);toast("Résumé copié !","info")}}
-                    style={{fontFamily:"'Inter',sans-serif",height:28,padding:"0 10px",background:autoSumCopied?T.surface:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:6,fontSize:11,fontWeight:500,color:T.textSec,cursor:"pointer",transition:"all 0.2s"}}>
-                    {autoSumCopied?"✓ Copié":"Copier"}
-                  </button>
-                )}
-              </div>
-              <div style={{padding:"1.25rem 1.5rem",minHeight:80}}>
-                {autoSumLoading&&(
-                  <div style={{display:"flex",alignItems:"center",gap:12}}>
-                    <div style={{width:16,height:16,border:`2px solid ${T.border}`,borderTop:`2px solid ${T.text}`,borderRadius:"50%",animation:"spin 0.8s linear infinite",flexShrink:0}}/>
-                    <div style={{flex:1}}>
-                      <p style={{fontSize:13,color:T.textSec,marginBottom:6}}>Génération du résumé…</p>
-                      <div style={{background:T.border,borderRadius:100,height:3,overflow:"hidden"}}>
-                        <div style={{height:"100%",width:"60%",background:`linear-gradient(90deg,${T.text},#888)`,borderRadius:100,animation:"shimmer 1.5s infinite",backgroundSize:"200% 100%"}}/>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                {autoSummary&&!autoSumLoading&&(
-                  <div>{autoSummary.split("\n").map((line,i)=>renderSummaryLine(line,i))}</div>
-                )}
-              </div>
-            </div>
-
-
-
-            {/* TRANSCRIPT TAB */}
-            {tab==="transcript"&&(
-              <div style={{display:"flex",flexDirection:"column",gap:10}}>
-                <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,overflow:"hidden",boxShadow:T.shadow}}>
-                  <div style={{display:"flex",alignItems:"center",borderBottom:`1px solid ${T.border}`,padding:"0 1.25rem"}}>
-                    {[{k:"raw",l:"Brut"},{k:"timestamped",l:"Horodaté"}].map(t=>(
-                      <button key={t.k} onClick={()=>setTxTab(t.k)} style={{fontFamily:"'Inter',sans-serif",padding:"0.8rem 0",marginRight:"1.5rem",fontSize:12,fontWeight:600,background:"transparent",border:"none",cursor:"pointer",color:txTab===t.k?T.text:T.textTer,borderBottom:`2px solid ${txTab===t.k?T.text:"transparent"}`,transition:"all 0.15s"}}>{t.l}</button>
-                    ))}
-                    <div style={{marginLeft:"auto"}}>
-                      <button onClick={()=>copy(tx.rawTranscript)} style={{fontFamily:"'Inter',sans-serif",height:28,padding:"0 10px",background:copied?T.surface:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:6,fontSize:11,fontWeight:500,color:copied?T.text:T.textSec,cursor:"pointer",transition:"all 0.2s"}}>{copied?"✓ Copié":"Copier"}</button>
-                    </div>
-                  </div>
-                  <div style={{padding:"1.25rem",maxHeight:240,overflowY:"auto"}}>
-                    {txTab==="raw"?<p style={{fontSize:13,color:T.textSec,lineHeight:1.9}}>{tx.rawTranscript}</p>
-                    :<div style={{display:"flex",flexDirection:"column",gap:10}}>
-                      {tx.timestamped.map((t,i)=>(
-                        <div key={i} style={{display:"flex",gap:"1rem",alignItems:"flex-start"}}>
-                          <span style={{fontSize:10,fontWeight:700,color:T.orange,flexShrink:0,marginTop:3,minWidth:34,...mono}}>{t.time}</span>
-                          <span style={{fontSize:13,color:T.textSec,lineHeight:1.8}}>{t.text}</span>
-                        </div>
-                      ))}
-                    </div>}
-                  </div>
-                </div>
-                <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.125rem",boxShadow:T.shadow}}>
-                  <p style={{fontSize:10,fontWeight:700,color:T.textTer,marginBottom:"0.875rem",textTransform:"uppercase",letterSpacing:1}}>Outils IA supplémentaires</p>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:6,marginBottom:aiOut||aiLoading?"0.875rem":0}}>
-                    {aiTools.map(t=>(
-                      <button key={t.k} onClick={()=>runAI(t.k)} style={{fontFamily:"'Inter',sans-serif",padding:"6px 14px",borderRadius:8,fontSize:12,fontWeight:600,cursor:"pointer",transition:"all 0.15s",background:aiTool===t.k?T.text:T.surface,color:aiTool===t.k?"#fff":T.textSec,border:`1px solid ${aiTool===t.k?T.text:T.border}`,boxShadow:aiTool===t.k?"0 2px 0 rgba(0,0,0,0.2)":"none"}}>{t.l}</button>
-                    ))}
-                  </div>
-                  {aiLoading&&<div style={{padding:"0.75rem",background:T.surface,borderRadius:8,display:"flex",alignItems:"center",gap:10,border:`1px solid ${T.border}`}}><div style={{width:14,height:14,border:`2px solid ${T.border}`,borderTop:`2px solid ${T.text}`,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/><span style={{fontSize:12,color:T.textSec}}>Génération…</span></div>}
-                  {aiOut&&!aiLoading&&(
-                    <div style={{background:T.surface,borderRadius:8,padding:"1rem",border:`1px solid ${T.border}`}}>
-                      <div style={{display:"flex",justifyContent:"space-between",marginBottom:"0.5rem"}}>
-                        <span style={{fontSize:10,fontWeight:700,color:T.text,textTransform:"uppercase",letterSpacing:0.8}}>{aiTools.find(t=>t.k===aiTool)?.l}</span>
-                        <button onClick={()=>copy(aiOut)} style={{fontFamily:"'Inter',sans-serif",fontSize:11,color:T.textSec,background:"transparent",border:"none",cursor:"pointer",fontWeight:500}}>Copier</button>
-                      </div>
-                      <p style={{fontSize:13,color:T.textSec,lineHeight:1.85,whiteSpace:"pre-wrap"}}>{aiOut}</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-
-          </div>
-        )}
-      </div>
-    </div>
-  )
-}
-
-/* ═══════════════════════════════════════
-   DASHBOARD USER
-═══════════════════════════════════════ */
-const TAG_COLORS=["#6366F1","#F97316","#22C55E","#F59E0B","#A855F7","#EC4899"]
-function Dashboard({usageCount,isPro,setIsPro,transcripts,setTranscripts,setView}){
-  const [filter,setFilter]=useState("all")
-  const [activeTag,setActiveTag]=useState(null)
-  const [addTagFor,setAddTagFor]=useState(null)
-  const [tagDraft,setTagDraft]=useState("")
-
-  const allTags=[...new Set(transcripts.flatMap(t=>t.tags||[]))]
-  const filtered=transcripts.filter(t=>filter==="favorites"?t.favorite:true).filter(t=>activeTag?(t.tags||[]).includes(activeTag):true)
-  function toggleFav(id){setTranscripts(p=>p.map(t=>t.id===id?{...t,favorite:!t.favorite}:t));toast("Favori mis à jour","info")}
-  function addTag(id){if(!tagDraft.trim())return;setTranscripts(p=>p.map(t=>t.id===id?{...t,tags:[...(t.tags||[]),tagDraft.trim()]}:t));setTagDraft("");setAddTagFor(null);toast("Tag ajouté","success")}
-  function removeTag(id,tag){setTranscripts(p=>p.map(t=>t.id===id?{...t,tags:(t.tags||[]).filter(tg=>tg!==tag)}:t))}
-
-  const chartData=[2,5,3,7,4,8,usageCount].slice(-7)
-  const maxV=Math.max(...chartData,1)
-
-  return(
-    <div style={{minHeight:"100vh",background:T.bg}}>
-      <div style={{maxWidth:1160,margin:"0 auto",padding:"2rem 2rem"}}>
-        <div style={{marginBottom:"1.75rem",paddingBottom:"1.25rem",borderBottom:`1px solid ${T.border}`}}>
-          <SectionLabel>Tableau de bord</SectionLabel>
-          <h1 style={{fontSize:26,fontWeight:800,color:T.text,letterSpacing:-1.2}}>Vue d'ensemble</h1>
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"repeat(4,1fr)",gap:10,marginBottom:"1.25rem"}}>
-          {[{l:"Transcriptions",v:usageCount,icon:"📄"},{l:"Favoris",v:transcripts.filter(t=>t.favorite).length,icon:"⭐"},{l:"Plan",v:isPro?"Pro":"Gratuit",icon:"🏷️",ac:isPro},{l:"Crédits",v:isPro?"∞":`${Math.max(FREE_LIMIT-usageCount,0)}/${FREE_LIMIT}`,icon:"🔄"}].map(s=>(
-            <div key={s.l} className="card-3d" style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.125rem",boxShadow:T.shadow}}>
-              <div style={{fontSize:18,marginBottom:8}}>{s.icon}</div>
-              <p style={{fontSize:22,fontWeight:800,color:s.ac?T.orange:T.text,letterSpacing:-0.5,marginBottom:3}}>{s.v}</p>
-              <p style={{fontSize:10,color:T.textTer,fontWeight:600,textTransform:"uppercase",letterSpacing:0.8}}>{s.l}</p>
-            </div>
-          ))}
-        </div>
-        <div style={{display:"grid",gridTemplateColumns:"1fr 260px",gap:10,marginBottom:"1.25rem"}}>
-          <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",boxShadow:T.shadow}}>
-            <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:"1.25rem"}}>Activité — 7 derniers jours</p>
-            <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80}}>
-              {chartData.map((v,i)=>{
-                const days=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
-                return(
-                  <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,position:"relative",cursor:"pointer"}}
-                    onMouseEnter={e=>{const tt=document.createElement("div");tt.id=`tt-${i}`;tt.style.cssText=`position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;white-space:nowrap;z-index:10;font-family:'DM Mono',monospace;pointer-events:none`;tt.textContent=`${v} transcription${v>1?'s':''}`;e.currentTarget.appendChild(tt)}}
-                    onMouseLeave={e=>{const tt=e.currentTarget.querySelector(`#tt-${i}`);if(tt)tt.remove()}}>
-                    <div style={{width:"100%",background:i===chartData.length-1?T.text:T.border,borderRadius:4,height:`${(v/maxV)*70}px`,transition:"height 0.3s ease",boxShadow:i===chartData.length-1?"0 3px 0 rgba(0,0,0,0.2)":"none"}}/>
-                    <span style={{fontSize:9,color:T.textTer,...mono}}>{days[i]}</span>
-                  </div>
-                )
-              })}
-            </div>
-            <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>{["L","M","M","J","V","S","D"].map((d,i)=><span key={i} style={{fontSize:9,color:T.textTer,...mono}}>{d}</span>)}</div>
-          </div>
-          <div className="card-3d" style={{background:isPro?T.text:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",boxShadow:isPro?"0 8px 0 rgba(0,0,0,0.25),0 16px 40px rgba(0,0,0,0.12)":T.shadow}}>
-            <p style={{fontSize:10,fontWeight:700,color:isPro?"rgba(255,255,255,0.4)":T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:"0.875rem"}}>Abonnement</p>
-            <p style={{fontSize:18,fontWeight:800,color:isPro?"#fff":T.text,letterSpacing:-0.5,marginBottom:4}}>{isPro?"Plan Pro":"Plan Gratuit"}</p>
-            <p style={{fontSize:12,color:isPro?"rgba(255,255,255,0.5)":T.textTer,marginBottom:"1.25rem"}}>{isPro?"5€ / mois · Actif":`${Math.max(FREE_LIMIT-usageCount,0)} crédit(s) restant(s) aujourd'hui`}</p>
-            {isPro?<button onClick={()=>{setIsPro(false);toast("Annulé","warn")}} style={{fontFamily:"'Inter',sans-serif",height:34,width:"100%",background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,fontSize:12,fontWeight:600,cursor:"pointer"}}>Annuler</button>
-            :<DarkBtn full size="sm" onClick={()=>{setIsPro(true);toast("Bienvenue Pro !","success")}} style={{boxShadow:T.shadow3d}}>Passer au Pro →</DarkBtn>}
-          </div>
-        </div>
-        <div style={{display:"flex",gap:6,marginBottom:"1rem",flexWrap:"wrap",alignItems:"center"}}>
-          {[["all",`Toutes (${transcripts.length})`],["favorites",`⭐ Favoris (${transcripts.filter(t=>t.favorite).length})`]].map(([v,l])=>(
-            <OutlineBtn key={v} size="sm" active={filter===v} onClick={()=>setFilter(v)}>{l}</OutlineBtn>
-          ))}
-          {allTags.map((tag,ti)=>(
-            <button key={tag} onClick={()=>setActiveTag(activeTag===tag?null:tag)} style={{fontFamily:"'Inter',sans-serif",padding:"4px 10px",borderRadius:5,fontSize:11,fontWeight:600,cursor:"pointer",background:activeTag===tag?TAG_COLORS[ti%TAG_COLORS.length]+"18":"transparent",color:TAG_COLORS[ti%TAG_COLORS.length],border:`1px solid ${TAG_COLORS[ti%TAG_COLORS.length]}40`,transition:"all 0.15s"}}>{tag}</button>
-          ))}
-        </div>
-        <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,overflow:"hidden",boxShadow:T.shadow}}>
-          <div style={{padding:"0.875rem 1.25rem",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:1}}>Historique ({filtered.length})</p>
-            <DarkBtn size="sm" onClick={()=>setView("app")} style={{boxShadow:"0 2px 0 rgba(0,0,0,0.2)"}}>+ Nouvelle</DarkBtn>
-          </div>
-          {filtered.length===0&&<div style={{padding:"3rem",textAlign:"center"}}><p style={{color:T.textTer,fontSize:13}}>Aucune transcription. <span style={{color:T.text,fontWeight:600,cursor:"pointer"}} onClick={()=>setView("app")}>Commencer !</span></p></div>}
-          {filtered.map((t,i)=>(
-            <div key={t.id} className="row-hover" style={{padding:"1rem 1.25rem",borderBottom:i<filtered.length-1?`1px solid ${T.border}`:"none",transition:"background 0.15s"}}>
-              <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",gap:8}}>
-                <div style={{flex:1,minWidth:0}}>
-                  <div style={{display:"flex",alignItems:"center",gap:7,marginBottom:3}}>
-                    <p style={{fontSize:13,fontWeight:600,color:T.text,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{t.title}</p>
-                    {t.favorite&&<span style={{fontSize:12}}>⭐</span>}
-                  </div>
-                  <p style={{fontSize:11,color:T.textTer,...mono,marginBottom:t.tags?.length?"6px":"0"}}>{t.channel} · {t.date} · {t.duration}</p>
-                  {t.tags?.length>0&&<div style={{display:"flex",gap:4,flexWrap:"wrap"}}>{(t.tags||[]).map((tag,ti)=><span key={ti} style={{display:"inline-flex",alignItems:"center",gap:4,padding:"2px 7px",borderRadius:4,fontSize:10,fontWeight:600,background:TAG_COLORS[ti%TAG_COLORS.length]+"15",color:TAG_COLORS[ti%TAG_COLORS.length],border:`1px solid ${TAG_COLORS[ti%TAG_COLORS.length]}30`,...mono}}>{tag}<span onClick={()=>removeTag(t.id,tag)} style={{cursor:"pointer",opacity:0.6}}>✕</span></span>)}</div>}
-                  {addTagFor===t.id&&<div style={{display:"flex",gap:6,marginTop:7}}><input value={tagDraft} onChange={e=>setTagDraft(e.target.value)} onKeyDown={e=>e.key==="Enter"&&addTag(t.id)} placeholder="Nom du tag…" autoFocus style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:6,color:T.text,fontSize:11,padding:"4px 9px",fontFamily:"'Inter',sans-serif",outline:"none",width:110}}/><button onClick={()=>addTag(t.id)} style={{fontFamily:"'Inter',sans-serif",fontSize:11,fontWeight:700,color:T.text,background:"transparent",border:"none",cursor:"pointer"}}>Ajouter</button><button onClick={()=>setAddTagFor(null)} style={{fontFamily:"'Inter',sans-serif",fontSize:11,color:T.textTer,background:"transparent",border:"none",cursor:"pointer"}}>Annuler</button></div>}
-                </div>
-                <div style={{display:"flex",gap:5,alignItems:"center",flexShrink:0}}>
-                  <button onClick={()=>toggleFav(t.id)} style={{background:"transparent",border:"none",cursor:"pointer",opacity:t.favorite?1:0.25,fontSize:13,transition:"opacity 0.2s"}}>⭐</button>
-                  <button onClick={()=>setAddTagFor(addTagFor===t.id?null:t.id)} style={{fontFamily:"'Inter',sans-serif",background:T.surface,border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",color:T.textSec,fontSize:10,cursor:"pointer",fontWeight:500}}>🏷️</button>
-                  <button onClick={()=>{navigator.clipboard?.writeText(`https://transcriptai.app/share/${t.shareId}`);toast("Lien copié !","info")}} style={{fontFamily:"'Inter',sans-serif",background:T.surface,border:`1px solid ${T.border}`,borderRadius:5,padding:"3px 8px",color:T.textSec,fontSize:10,cursor:"pointer",fontWeight:500}}>🔗</button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   )
@@ -1349,11 +354,11 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
         <h2 style={{fontSize:22,fontWeight:800,color:T.text,letterSpacing:-0.8,marginBottom:4}}>Espace Admin</h2>
         <p style={{fontSize:13,color:T.textSec,marginBottom:"2rem"}}>Accès restreint · Authentification requise</p>
         <div style={{background:T.bg,border:`1.5px solid ${pwdErr?T.red:T.border}`,borderRadius:10,padding:"0 14px",height:46,display:"flex",alignItems:"center",marginBottom:10,transition:"border-color 0.2s"}}>
-          <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="Mot de passe administrateur" style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:14,fontFamily:"'Inter',sans-serif"}}/>
+          <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} onKeyDown={e=>e.key==="Enter"&&login()} placeholder="Mot de passe administrateur" style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:14,fontFamily:"Inter,sans-serif"}}/>
         </div>
         {pwdErr&&<p style={{color:T.red,fontSize:12,marginBottom:8,...mono}}>Mot de passe incorrect</p>}
         <DarkBtn full size="lg" onClick={login} style={{boxShadow:T.shadow3d}}>Accéder →</DarkBtn>
-        <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",color:T.textTer,fontSize:12,cursor:"pointer",marginTop:"1rem"}}>← Retour au site</button>
+        <button onClick={()=>setView("landing")} style={{fontFamily:"Inter,sans-serif",background:"transparent",border:"none",color:T.textTer,fontSize:12,cursor:"pointer",marginTop:"1rem"}}>← Retour au site</button>
       </div>
     </div>
   )
@@ -1380,7 +385,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
         <div style={{position:"fixed",inset:0,zIndex:300,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(6px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem",animation:"fadeIn 0.2s"}}>
           <div style={{background:T.bgWhite,borderRadius:16,padding:"2rem",maxWidth:480,width:"100%",boxShadow:T.shadowLg}}>
             <h3 style={{fontSize:16,fontWeight:700,color:T.text,marginBottom:"1rem"}}>Modifier l'avis de {editReview.author}</h3>
-            <textarea value={editReview.text} onChange={e=>setEditReview({...editReview,text:e.target.value})} style={{width:"100%",minHeight:100,background:T.bg,border:`1px solid ${T.border}`,borderRadius:9,color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"0.875rem",outline:"none",resize:"vertical",marginBottom:"1rem"}}/>
+            <textarea value={editReview.text} onChange={e=>setEditReview({...editReview,text:e.target.value})} style={{width:"100%",minHeight:100,background:T.bg,border:`1px solid ${T.border}`,borderRadius:9,color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",padding:"0.875rem",outline:"none",resize:"vertical",marginBottom:"1rem"}}/>
             <div style={{display:"flex",gap:8}}>
               <OutlineBtn full onClick={()=>setEditReview(null)} style={{justifyContent:"center",height:40}}>Annuler</OutlineBtn>
               <DarkBtn full onClick={()=>saveReview(editReview.id,editReview.text)} style={{height:40}}>Sauvegarder</DarkBtn>
@@ -1399,7 +404,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
               <h1 style={{fontSize:22,fontWeight:800,color:T.text,letterSpacing:-0.8}}>Gestion du site</h1>
             </div>
           </div>
-          <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,color:T.textSec,cursor:"pointer"}}>← Retour au site</button>
+          <button onClick={()=>setView("landing")} style={{fontFamily:"Inter,sans-serif",background:"transparent",border:`1px solid ${T.border}`,borderRadius:8,padding:"7px 14px",fontSize:12,fontWeight:500,color:T.textSec,cursor:"pointer"}}>← Retour au site</button>
         </div>
 
         {/* Stats */}
@@ -1421,7 +426,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
         {/* Tabs */}
         <div style={{display:"flex",gap:4,background:T.surface,padding:4,borderRadius:10,border:`1px solid ${T.border}`,marginBottom:"1.25rem",width:"fit-content"}}>
           {[["users","👥 Utilisateurs"],["reviews","💬 Avis"],["banner","📢 Bannière"],["maintenance","🔧 Maintenance"],["counter","👁 Compteur"],["stats","📊 Stats"],["promo","🎟️ Promos"]].map(([k,l])=>(
-            <button key={k} onClick={()=>setAdminTab(k)} style={{fontFamily:"'Inter',sans-serif",padding:"7px 18px",fontSize:13,fontWeight:600,background:adminTab===k?T.bgWhite:"transparent",color:adminTab===k?T.text:T.textTer,border:`1px solid ${adminTab===k?T.border:"transparent"}`,borderRadius:7,cursor:"pointer",transition:"all 0.15s",boxShadow:adminTab===k?T.shadow:"none"}}>{l}</button>
+            <button key={k} onClick={()=>setAdminTab(k)} style={{fontFamily:"Inter,sans-serif",padding:"7px 18px",fontSize:13,fontWeight:600,background:adminTab===k?T.bgWhite:"transparent",color:adminTab===k?T.text:T.textTer,border:`1px solid ${adminTab===k?T.border:"transparent"}`,borderRadius:7,cursor:"pointer",transition:"all 0.15s",boxShadow:adminTab===k?T.shadow:"none"}}>{l}</button>
           ))}
         </div>
 
@@ -1430,7 +435,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
           <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:14,overflow:"hidden",boxShadow:T.shadow}}>
             <div style={{padding:"1rem 1.25rem",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",gap:10}}>
               <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:1}}>Utilisateurs ({filteredUsers.length})</p>
-              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher par nom ou email…" style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:12,padding:"6px 12px",fontFamily:"'Inter',sans-serif",outline:"none",width:260}}/>
+              <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Rechercher par nom ou email…" style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:12,padding:"6px 12px",fontFamily:"Inter,sans-serif",outline:"none",width:260}}/>
             </div>
             <div style={{overflowX:"auto"}}>
               <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
@@ -1470,10 +475,10 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
                       <td style={{padding:"12px 16px",color:T.textSec,...mono,fontSize:12}}>{u.transcriptions}</td>
                       <td style={{padding:"12px 16px"}}>
                         <div style={{display:"flex",gap:5}}>
-                          <button onClick={()=>togglePro(u.id)} style={{fontFamily:"'Inter',sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:u.plan==="pro"?T.surface:T.text,color:u.plan==="pro"?T.text:"#fff",border:`1px solid ${u.plan==="pro"?T.border:"transparent"}`,borderRadius:6,cursor:"pointer"}}>
+                          <button onClick={()=>togglePro(u.id)} style={{fontFamily:"Inter,sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:u.plan==="pro"?T.surface:T.text,color:u.plan==="pro"?T.text:"#fff",border:`1px solid ${u.plan==="pro"?T.border:"transparent"}`,borderRadius:6,cursor:"pointer"}}>
                             {u.plan==="pro"?"→ Free":"→ Pro"}
                           </button>
-                          <button onClick={()=>setConfirmBan(u)} style={{fontFamily:"'Inter',sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:u.banned?T.green+"15":T.red+"10",color:u.banned?T.green:T.red,border:`1px solid ${u.banned?T.green+"40":T.red+"30"}`,borderRadius:6,cursor:"pointer"}}>
+                          <button onClick={()=>setConfirmBan(u)} style={{fontFamily:"Inter,sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:u.banned?T.green+"15":T.red+"10",color:u.banned?T.green:T.red,border:`1px solid ${u.banned?T.green+"40":T.red+"30"}`,borderRadius:6,cursor:"pointer"}}>
                             {u.banned?"Débannir":"Bannir"}
                           </button>
                         </div>
@@ -1505,8 +510,8 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
                     <p style={{fontSize:13,color:T.textSec,lineHeight:1.7,fontStyle:"italic"}}>"{r.text}"</p>
                   </div>
                   <div style={{display:"flex",flexDirection:"column",gap:6,flexShrink:0}}>
-                    <button onClick={()=>setEditReview({...r})} style={{fontFamily:"'Inter',sans-serif",height:30,padding:"0 12px",fontSize:11,fontWeight:600,background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",color:T.text}}>✏️ Modifier</button>
-                    <button onClick={()=>toggleReview(r.id)} style={{fontFamily:"'Inter',sans-serif",height:30,padding:"0 12px",fontSize:11,fontWeight:600,background:r.visible?T.red+"10":T.green+"10",border:`1px solid ${r.visible?T.red+"30":T.green+"40"}`,borderRadius:6,cursor:"pointer",color:r.visible?T.red:T.green}}>
+                    <button onClick={()=>setEditReview({...r})} style={{fontFamily:"Inter,sans-serif",height:30,padding:"0 12px",fontSize:11,fontWeight:600,background:T.surface,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer",color:T.text}}>✏️ Modifier</button>
+                    <button onClick={()=>toggleReview(r.id)} style={{fontFamily:"Inter,sans-serif",height:30,padding:"0 12px",fontSize:11,fontWeight:600,background:r.visible?T.red+"10":T.green+"10",border:`1px solid ${r.visible?T.red+"30":T.green+"40"}`,borderRadius:6,cursor:"pointer",color:r.visible?T.red:T.green}}>
                       {r.visible?"👁 Masquer":"👁 Afficher"}
                     </button>
                   </div>
@@ -1547,13 +552,13 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12}}>
               <div>
                 <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Texte (HTML accepté)</p>
-                <textarea value={bannerConfig.text} onChange={e=>setBannerConfig(p=>({...p,text:e.target.value}))} style={{width:"100%",minHeight:80,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:12,fontFamily:"'DM Mono',monospace",padding:"10px 12px",outline:"none",resize:"vertical"}}/>
+                <textarea value={bannerConfig.text} onChange={e=>setBannerConfig(p=>({...p,text:e.target.value}))} style={{width:"100%",minHeight:80,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:12,fontFamily:"DM Mono,monospace",padding:"10px 12px",outline:"none",resize:"vertical"}}/>
               </div>
               <div>
                 <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Lien du bouton</p>
-                <input value={bannerConfig.link} onChange={e=>setBannerConfig(p=>({...p,link:e.target.value}))} placeholder="https://..." style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"0 12px",height:40,outline:"none",marginBottom:8}}/>
+                <input value={bannerConfig.link} onChange={e=>setBannerConfig(p=>({...p,link:e.target.value}))} placeholder="https://..." style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",padding:"0 12px",height:40,outline:"none",marginBottom:8}}/>
                 <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Label du bouton</p>
-                <input value={bannerConfig.linkLabel} onChange={e=>setBannerConfig(p=>({...p,linkLabel:e.target.value}))} placeholder="En profiter →" style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"0 12px",height:40,outline:"none"}}/>
+                <input value={bannerConfig.linkLabel} onChange={e=>setBannerConfig(p=>({...p,linkLabel:e.target.value}))} placeholder="En profiter →" style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",padding:"0 12px",height:40,outline:"none"}}/>
               </div>
             </div>
 
@@ -1622,17 +627,17 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:"1.25rem"}}>
               <div>
                 <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Titre de la page</p>
-                <input value={maintenance.title} onChange={e=>setMaintenance(p=>({...p,title:e.target.value}))} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"0 12px",height:42,outline:"none"}}/>
+                <input value={maintenance.title} onChange={e=>setMaintenance(p=>({...p,title:e.target.value}))} style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",padding:"0 12px",height:42,outline:"none"}}/>
               </div>
               <div>
                 <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Retour estimé</p>
-                <input value={maintenance.estimatedTime} onChange={e=>setMaintenance(p=>({...p,estimatedTime:e.target.value}))} placeholder="ex: Aujourd'hui à 18h00" style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"0 12px",height:42,outline:"none"}}/>
+                <input value={maintenance.estimatedTime} onChange={e=>setMaintenance(p=>({...p,estimatedTime:e.target.value}))} placeholder="ex: Aujourd'hui à 18h00" style={{width:"100%",background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",padding:"0 12px",height:42,outline:"none"}}/>
               </div>
             </div>
 
             <div style={{marginBottom:"1.5rem"}}>
               <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:6}}>Message affiché aux visiteurs</p>
-              <textarea value={maintenance.message} onChange={e=>setMaintenance(p=>({...p,message:e.target.value}))} style={{width:"100%",minHeight:90,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"10px 12px",outline:"none",resize:"vertical"}}/>
+              <textarea value={maintenance.message} onChange={e=>setMaintenance(p=>({...p,message:e.target.value}))} style={{width:"100%",minHeight:90,background:T.bg,border:`1px solid ${T.border}`,borderRadius:8,color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",padding:"10px 12px",outline:"none",resize:"vertical"}}/>
             </div>
 
             {/* Preview */}
@@ -1756,7 +761,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
                 const val=input?input.value.trim():""
                 if(val){setPromoCodes(p=>[...p,{id:Date.now(),code:val.toUpperCase(),discount:"20%",type:"monthly",uses:0,maxUses:100,active:true,expires:"31/12/2025"}]);if(input)input.value="";toast("Code créé !","success")}
               }} style={{boxShadow:"0 2px 0 rgba(0,0,0,0.2)"}}>+ Créer</DarkBtn>
-              <input id="new-promo-input" placeholder="Ex: SUMMER30" style={{fontFamily:"'Inter',sans-serif",height:34,padding:"0 12px",fontSize:12,background:"#F2F2F0",border:"1px solid #E4E4E0",borderRadius:7,color:"#0A0A0A",outline:"none",width:140}}/>
+              <input id="new-promo-input" placeholder="Ex: SUMMER30" style={{fontFamily:"Inter,sans-serif",height:34,padding:"0 12px",fontSize:12,background:"#F2F2F0",border:"1px solid #E4E4E0",borderRadius:7,color:"#0A0A0A",outline:"none",width:140}}/>
             </div>
             <table style={{width:"100%",borderCollapse:"collapse",fontSize:13}}>
               <thead>
@@ -1790,10 +795,10 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
                     </td>
                     <td style={{padding:"12px 16px"}}>
                       <div style={{display:"flex",gap:5}}>
-                        <button onClick={()=>setPromoCodes(prev=>prev.map(x=>x.id===p.id?{...x,active:!x.active}:x))} style={{fontFamily:"'Inter',sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:p.active?T.red+"10":T.green+"15",color:p.active?T.red:T.green,border:`1px solid ${p.active?T.red+"30":T.green+"40"}`,borderRadius:6,cursor:"pointer"}}>
+                        <button onClick={()=>setPromoCodes(prev=>prev.map(x=>x.id===p.id?{...x,active:!x.active}:x))} style={{fontFamily:"Inter,sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:p.active?T.red+"10":T.green+"15",color:p.active?T.red:T.green,border:`1px solid ${p.active?T.red+"30":T.green+"40"}`,borderRadius:6,cursor:"pointer"}}>
                           {p.active?"Désactiver":"Activer"}
                         </button>
-                        <button onClick={()=>setPromoCodes(prev=>prev.filter(x=>x.id!==p.id))} style={{fontFamily:"'Inter',sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:"transparent",color:T.textTer,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer"}}>✕</button>
+                        <button onClick={()=>setPromoCodes(prev=>prev.filter(x=>x.id!==p.id))} style={{fontFamily:"Inter,sans-serif",height:28,padding:"0 10px",fontSize:11,fontWeight:600,background:"transparent",color:T.textTer,border:`1px solid ${T.border}`,borderRadius:6,cursor:"pointer"}}>✕</button>
                       </div>
                     </td>
                   </tr>
@@ -1824,7 +829,7 @@ function AuthModal({mode,onClose,onAuth}){
   function Field({value,onChange,placeholder,type="text",focused,setFocused}){
     return(
       <div style={{background:T.bg,border:`1.5px solid ${focused?T.text:T.border}`,borderRadius:9,display:"flex",alignItems:"center",padding:"0 12px",height:46,transition:"all 0.15s",boxShadow:focused?"0 4px 0 rgba(0,0,0,0.07)":"none"}}>
-        <input value={value} onChange={ev=>onChange(ev.target.value)} placeholder={placeholder} type={type} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:14,fontFamily:"'Inter',sans-serif"}}/>
+        <input value={value} onChange={ev=>onChange(ev.target.value)} placeholder={placeholder} type={type} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:14,fontFamily:"Inter,sans-serif"}}/>
       </div>
     )
   }
@@ -1879,7 +884,7 @@ function AuthModal({mode,onClose,onAuth}){
         <p style={{fontSize:12,color:T.textSec,marginTop:3,marginBottom:"1.5rem"}}>{m==="login"?"Connectez-vous à votre espace":"3 transcriptions gratuites incluses"}</p>
 
         {/* Google OAuth button */}
-        <button onClick={()=>sbGoogleLogin()} style={{fontFamily:"'Inter',sans-serif",width:"100%",height:46,background:T.bg,border:`1.5px solid ${T.border}`,borderRadius:9,fontSize:14,fontWeight:600,color:T.text,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:"1rem",transition:"all 0.15s"}}>
+        <button onClick={()=>sbGoogleLogin()} style={{fontFamily:"Inter,sans-serif",width:"100%",height:46,background:T.bg,border:`1.5px solid ${T.border}`,borderRadius:9,fontSize:14,fontWeight:600,color:T.text,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:"1rem",transition:"all 0.15s"}}>
           <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
           Continuer avec Google
         </button>
@@ -1969,7 +974,7 @@ function StatusPage({setView}){
   return(
     <div style={{minHeight:"100vh",background:T.bg}}>
       <div style={{maxWidth:960,margin:"0 auto",padding:"3rem 2rem"}}>
-        <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",color:T.textSec,fontSize:13,cursor:"pointer",marginBottom:"2rem",display:"flex",alignItems:"center",gap:6}}>← Retour</button>
+        <button onClick={()=>setView("landing")} style={{fontFamily:"Inter,sans-serif",background:"transparent",border:"none",color:T.textSec,fontSize:13,cursor:"pointer",marginBottom:"2rem",display:"flex",alignItems:"center",gap:6}}>← Retour</button>
         {/* Header */}
         <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:18,padding:"2rem",marginBottom:16,boxShadow:T.shadow,textAlign:"center"}}>
           <div style={{
@@ -2116,7 +1121,7 @@ function MaintenanceScreen({maintenance,onAdminAccess}){
             <p style={{fontSize:11,color:T.textTer,marginBottom:8,...mono}}>Accès administrateur</p>
             <div style={{display:"flex",gap:8,justifyContent:"center"}}>
               <div style={{background:T.bgWhite,border:`1.5px solid ${err?T.red:T.border}`,borderRadius:9,padding:"0 14px",height:42,display:"flex",alignItems:"center",transition:"border-color 0.2s"}}>
-                <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} onKeyDown={e=>e.key==="Enter"&&tryAdmin()} placeholder="Mot de passe" style={{background:"transparent",border:"none",outline:"none",color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",width:160}}/>
+                <input type="password" value={pwd} onChange={e=>setPwd(e.target.value)} onKeyDown={e=>e.key==="Enter"&&tryAdmin()} placeholder="Mot de passe" style={{background:"transparent",border:"none",outline:"none",color:T.text,fontSize:13,fontFamily:"Inter,sans-serif",width:160}}/>
               </div>
               <DarkBtn size="sm" onClick={tryAdmin} style={{boxShadow:T.shadow3d}}>→</DarkBtn>
             </div>
@@ -2197,7 +1202,7 @@ function LegalPage({type,setView}){
   return(
     <div style={{minHeight:"100vh",background:T.bg}}>
       <div style={{maxWidth:820,margin:"0 auto",padding:"3rem"}}>
-        <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",color:T.textSec,fontSize:13,cursor:"pointer",marginBottom:"2rem",display:"flex",alignItems:"center",gap:6}}>← Retour</button>
+        <button onClick={()=>setView("landing")} style={{fontFamily:"Inter,sans-serif",background:"transparent",border:"none",color:T.textSec,fontSize:13,cursor:"pointer",marginBottom:"2rem",display:"flex",alignItems:"center",gap:6}}>← Retour</button>
         <div style={{marginBottom:"2.5rem",paddingBottom:"1.5rem",borderBottom:`2px solid ${T.text}`}}>
           <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:2,marginBottom:8,...mono}}>KEVININDUSTRIE · TranscriptIA</p>
           <h1 style={{fontSize:30,fontWeight:900,color:T.text,letterSpacing:-1.5}}>{page.title}</h1>
@@ -2367,7 +1372,7 @@ export default function App(){
   const showMaintenance = maintenance.enabled && view !== "admin"
 
   return(
-    <div style={{fontFamily:"'Inter',sans-serif",background:T.bg,minHeight:"100vh",color:T.text,display:"flex",flexDirection:"column"}}>
+    <div style={{fontFamily:"Inter,sans-serif",background:T.bg,minHeight:"100vh",color:T.text,display:"flex",flexDirection:"column"}}>
       <ReadingProgress/>
       {authLoading?(
         <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
