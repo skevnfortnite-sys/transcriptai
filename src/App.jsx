@@ -1064,8 +1064,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
       </div>
       <div class="section">
         <div class="section-title">Transcription complète</div>
-        <div class="transcript">${tx.rawTranscript.replace(/
-/g,'<br>')}</div>
+        <div class="transcript">${tx.rawTranscript.split('\n').join('<br>')}</div>
       </div>
       <div class="section">
         <div class="section-title">Version horodatée</div>
