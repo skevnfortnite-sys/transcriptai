@@ -178,17 +178,17 @@ function AnnouncementBanner({config}){
 /* ═══════════════════════════════════════
    LIVE USER COUNTER
 ═══════════════════════════════════════ */
-function LiveCounter(){
-  const [count,setCount]=useState(()=>Math.floor(Math.random()*800)+400)
+function LiveCounter({adminMin=100,adminMax=2000}){
+  const [count,setCount]=useState(()=>Math.floor(Math.random()*(adminMax-adminMin)*0.6)+adminMin)
   const [trend,setTrend]=useState(1)
   const trendRef=useRef(1)
   const countRef=useRef(count)
   useEffect(()=>{
     // organic movement: pick a target every 8-25s, drift toward it
-    let target=Math.floor(Math.random()*1900)+100
+    let target=Math.floor(Math.random()*(adminMax-adminMin))+adminMin
     let targetTimer=null
     function pickTarget(){
-      target=Math.floor(Math.random()*1900)+100
+      target=Math.floor(Math.random()*(adminMax-adminMin))+adminMin
       const ms=(8+Math.random()*17)*1000
       targetTimer=setTimeout(pickTarget,ms)
     }
@@ -199,7 +199,7 @@ function LiveCounter(){
       const diff=target-countRef.current
       const maxStep=Math.max(1,Math.floor(Math.abs(diff)*0.08)+Math.floor(Math.random()*6))
       const step=diff>0?Math.min(maxStep,diff):-Math.min(maxStep,-diff)
-      const next=Math.max(100,Math.min(2000,countRef.current+step))
+      const next=Math.max(adminMin,Math.min(adminMax,countRef.current+step))
       countRef.current=next
       trendRef.current=step>=0?1:-1
       setCount(next)
@@ -551,7 +551,7 @@ function FAQ(){
 /* ═══════════════════════════════════════
    LANDING
 ═══════════════════════════════════════ */
-function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
+function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews,adminCounterMin=100,adminCounterMax=2000}){
   const [url,setUrl]=useState("")
   const [focused,setFocused]=useState(false)
 
@@ -683,7 +683,7 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
           <div className="fade-up-d3" style={{
             display:"flex",alignItems:"center",background:T.bgWhite,
             border:`1.5px solid ${focused?T.text:T.border}`,borderRadius:14,
-            padding:"6px 6px 6px 20px",maxWidth:720,margin:"0 auto 0.875rem",
+            padding:"10px 10px 10px 24px",maxWidth:820,margin:"0 auto 1rem",
             boxShadow:focused
               ?"0 8px 0 rgba(0,0,0,0.14),0 14px 30px rgba(0,0,0,0.1)"
               :"0 6px 0 rgba(0,0,0,0.10),0 10px 24px rgba(0,0,0,0.07)",
@@ -696,14 +696,14 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
               placeholder="Collez le lien YouTube ici..."
               onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)}
               onKeyDown={e=>e.key==="Enter"&&setView("app")}
-              style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:15,fontFamily:"'Inter',sans-serif"}}/>
-            <DarkBtn onClick={()=>setView("app")} style={{height:48,padding:"0 24px",fontSize:14,borderRadius:10}}>Générer →</DarkBtn>
+              style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:18,fontFamily:"'Inter',sans-serif",height:52}}/>
+            <DarkBtn onClick={()=>setView("app")} style={{height:54,padding:"0 28px",fontSize:16,borderRadius:11}}>Générer →</DarkBtn>
           </div>
 
           <p className="fade-up-d3" style={{fontSize:12,color:T.textTer}}>3 transcriptions gratuites · sans carte bancaire</p>
 
           <div className="fade-up-d4" style={{display:"flex",justifyContent:"center",marginTop:"1.5rem"}}>
-            <LiveCounter/>
+            <LiveCounter adminMin={counterMin} adminMax={counterMax}/>
           </div>
 
           {/* Stats row */}
@@ -1078,7 +1078,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
   }
   function toggleFav(){if(!tx)return;setTranscripts(prev=>prev.map(t=>t.title===tx.title?{...t,favorite:!t.favorite}:t));toast("Favori mis à jour","info")}
   const currentMeta=transcripts.find(t=>t.title===tx?.title)
-  const TABS=[{k:"transcript",l:"Transcription"},{k:"chat",l:"💬 Chat"},{k:"citations",l:"✦ Citations"},{k:"translate",l:"🌐 Trad."}]
+  // Only transcript tab now
 
   function renderSummaryLine(line,i){
     if(!line)return null
@@ -1210,12 +1210,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
               </div>
             </div>
 
-            {/* Tabs */}
-            <div style={{display:"flex",gap:4,background:T.surface,padding:4,borderRadius:10,border:`1px solid ${T.border}`}}>
-              {TABS.map(t=>(
-                <button key={t.k} onClick={()=>setTab(t.k)} style={{fontFamily:"'Inter',sans-serif",flex:1,padding:"7px 0",fontSize:12,fontWeight:600,background:tab===t.k?T.bgWhite:"transparent",color:tab===t.k?T.text:T.textTer,border:`1px solid ${tab===t.k?T.border:"transparent"}`,borderRadius:7,cursor:"pointer",transition:"all 0.15s",boxShadow:tab===t.k?T.shadow:"none"}}>{t.l}</button>
-              ))}
-            </div>
+
 
             {/* TRANSCRIPT TAB */}
             {tab==="transcript"&&(
@@ -1262,65 +1257,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
               </div>
             )}
 
-            {/* CHAT */}
-            {tab==="chat"&&(
-              <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,overflow:"hidden",boxShadow:T.shadow}}>
-                <div style={{padding:"1rem 1.25rem",borderBottom:`1px solid ${T.border}`}}><p style={{fontSize:13,fontWeight:600,color:T.text}}>Chat IA</p><p style={{fontSize:11,color:T.textSec}}>Posez vos questions sur cette vidéo</p></div>
-                <div style={{height:240,overflowY:"auto",padding:"1rem 1.25rem",display:"flex",flexDirection:"column",gap:10}}>
-                  {chatHistory.length===0&&<div style={{textAlign:"center",padding:"1.5rem 0"}}><p style={{color:T.textTer,fontSize:13,marginBottom:"0.75rem"}}>Exemples :</p><div style={{display:"flex",flexWrap:"wrap",gap:6,justifyContent:"center"}}>{["De quoi parle cette vidéo ?","Quels conseils sont donnés ?","Résume en 3 points"].map(s=><button key={s} onClick={()=>setChatInput(s)} style={{fontFamily:"'Inter',sans-serif",padding:"5px 12px",borderRadius:7,fontSize:11,fontWeight:500,background:T.surface,border:`1px solid ${T.border}`,color:T.textSec,cursor:"pointer"}}>{s}</button>)}</div></div>}
-                  {chatHistory.map((m,i)=>(
-                    <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
-                      <div style={{maxWidth:"80%",padding:"9px 13px",borderRadius:10,fontSize:13,lineHeight:1.7,background:m.role==="user"?T.text:T.surface,color:m.role==="user"?"#fff":T.text,border:`1px solid ${m.role==="user"?"transparent":T.border}`,boxShadow:m.role==="user"?"0 2px 0 rgba(0,0,0,0.2)":T.shadow}}>{m.content}</div>
-                    </div>
-                  ))}
-                  {chatLoading&&<div style={{display:"flex",gap:5,padding:"4px 0"}}>{[0,1,2].map(i=><div key={i} style={{width:7,height:7,borderRadius:"50%",background:T.border,animation:`pulse2 1.2s ease ${i*0.2}s infinite`}}/>)}</div>}
-                  <div ref={chatEndRef}/>
-                </div>
-                <div style={{borderTop:`1px solid ${T.border}`,padding:"0.75rem 1rem",display:"flex",gap:8,background:T.bg}}>
-                  <input value={chatInput} onChange={e=>setChatInput(e.target.value)} onKeyDown={e=>e.key==="Enter"&&sendChat()} placeholder="Posez votre question… (Entrée)" style={{flex:1,background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:8,outline:"none",color:T.text,fontSize:13,fontFamily:"'Inter',sans-serif",padding:"0 12px",height:36}}/>
-                  <DarkBtn size="sm" onClick={sendChat} disabled={!chatInput.trim()||chatLoading} style={{height:36,boxShadow:"0 2px 0 rgba(0,0,0,0.2)"}}>→</DarkBtn>
-                </div>
-              </div>
-            )}
 
-            {/* CITATIONS */}
-            {tab==="citations"&&(
-              <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,overflow:"hidden",boxShadow:T.shadow}}>
-                <div style={{padding:"1rem 1.25rem",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-                  <div><p style={{fontSize:13,fontWeight:600,color:T.text}}>Citations mémorables</p><p style={{fontSize:11,color:T.textSec}}>Les phrases les plus marquantes</p></div>
-                  {citations.length===0&&<DarkBtn size="sm" onClick={extractCitations} disabled={citeLoading} style={{boxShadow:"0 2px 0 rgba(0,0,0,0.2)"}}>{citeLoading?"...":"Extraire"}</DarkBtn>}
-                </div>
-                <div style={{padding:"1.25rem",minHeight:160}}>
-                  {citeLoading&&<div style={{textAlign:"center",padding:"2rem"}}><div style={{width:28,height:28,border:`2px solid ${T.border}`,borderTop:`2px solid ${T.text}`,borderRadius:"50%",animation:"spin 0.9s linear infinite",margin:"0 auto"}}/></div>}
-                  {!citations.length&&!citeLoading&&<p style={{textAlign:"center",color:T.textTer,fontSize:13,padding:"2rem 0"}}>Cliquez sur "Extraire" pour obtenir les citations</p>}
-                  {citations.map((c,i)=>(
-                    <div key={i} style={{padding:"1rem",marginBottom:8,background:T.bg,borderRadius:9,borderLeft:`3px solid ${T.text}`,position:"relative",boxShadow:T.shadow}}>
-                      <p style={{fontSize:14,color:T.text,lineHeight:1.7,fontStyle:"italic",marginBottom:6}}>"{c.text}"</p>
-                      {c.context&&<p style={{fontSize:11,color:T.textTer}}>{c.context}</p>}
-                      <button onClick={()=>copy(`"${c.text}"`)} style={{position:"absolute",top:10,right:10,fontFamily:"'Inter',sans-serif",fontSize:10,color:T.textTer,background:"transparent",border:"none",cursor:"pointer",fontWeight:500}}>Copier</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* TRANSLATE */}
-            {tab==="translate"&&(
-              <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,overflow:"hidden",boxShadow:T.shadow}}>
-                <div style={{padding:"1rem 1.25rem",borderBottom:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-                  <div><p style={{fontSize:13,fontWeight:600,color:T.text}}>Traduction IA</p>{detectedLang&&<p style={{fontSize:11,color:T.textSec}}>Source : <span style={{fontWeight:600,color:T.text}}>{detectedLang}</span></p>}</div>
-                  <div style={{display:"flex",gap:8,alignItems:"center"}}>
-                    <select value={targetLang} onChange={e=>setTargetLang(e.target.value)} style={{background:T.bg,border:`1px solid ${T.border}`,borderRadius:7,color:T.text,fontSize:12,fontWeight:500,padding:"6px 10px",fontFamily:"'Inter',sans-serif",cursor:"pointer"}}>{LANGS.map(l=><option key={l}>{l}</option>)}</select>
-                    <DarkBtn size="sm" onClick={translate} disabled={transLoading} style={{boxShadow:"0 2px 0 rgba(0,0,0,0.2)"}}>{transLoading?"...":"Traduire"}</DarkBtn>
-                  </div>
-                </div>
-                <div style={{padding:"1.25rem",minHeight:160,maxHeight:280,overflowY:"auto"}}>
-                  {transLoading&&<div style={{textAlign:"center",padding:"2rem"}}><div style={{width:28,height:28,border:`2px solid ${T.border}`,borderTop:`2px solid ${T.blue}`,borderRadius:"50%",animation:"spin 0.9s linear infinite",margin:"0 auto"}}/></div>}
-                  {!translated&&!transLoading&&<p style={{textAlign:"center",color:T.textTer,fontSize:13,padding:"2rem 0"}}>Sélectionnez une langue et cliquez sur "Traduire"</p>}
-                  {translated&&!transLoading&&<div><div style={{display:"flex",justifyContent:"space-between",marginBottom:"0.75rem"}}><span style={{fontSize:11,fontWeight:700,background:"#EFF6FF",color:T.blue,padding:"3px 10px",borderRadius:5,border:"1px solid #BFDBFE",...mono}}>{targetLang}</span><button onClick={()=>copy(translated)} style={{fontFamily:"'Inter',sans-serif",fontSize:11,fontWeight:500,color:T.textSec,background:"transparent",border:"none",cursor:"pointer"}}>Copier</button></div><p style={{fontSize:13,color:T.textSec,lineHeight:1.9}}>{translated}</p></div>}
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
@@ -1367,19 +1304,24 @@ function Dashboard({usageCount,isPro,setIsPro,transcripts,setTranscripts,setView
           <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",boxShadow:T.shadow}}>
             <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:"1.25rem"}}>Activité — 7 derniers jours</p>
             <div style={{display:"flex",alignItems:"flex-end",gap:8,height:80}}>
-              {chartData.map((v,i)=>(
-                <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                  <div style={{width:"100%",background:i===chartData.length-1?T.text:T.border,borderRadius:4,height:`${(v/maxV)*70}px`,transition:"height 0.3s ease",boxShadow:i===chartData.length-1?"0 3px 0 rgba(0,0,0,0.2)":"none"}}/>
-                  <span style={{fontSize:9,color:T.textTer,...mono}}>{v}</span>
-                </div>
-              ))}
+              {chartData.map((v,i)=>{
+                const days=["Lun","Mar","Mer","Jeu","Ven","Sam","Dim"]
+                return(
+                  <div key={i} style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",gap:4,position:"relative",cursor:"pointer"}}
+                    onMouseEnter={e=>{const tt=document.createElement("div");tt.id=`tt-${i}`;tt.style.cssText=`position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#0A0A0A;color:#fff;border-radius:7px;padding:5px 10px;font-size:11px;font-weight:600;white-space:nowrap;z-index:10;font-family:'DM Mono',monospace;pointer-events:none`;tt.textContent=`${v} transcription${v>1?'s':''}`;e.currentTarget.appendChild(tt)}}
+                    onMouseLeave={e=>{const tt=e.currentTarget.querySelector(`#tt-${i}`);if(tt)tt.remove()}}>
+                    <div style={{width:"100%",background:i===chartData.length-1?T.text:T.border,borderRadius:4,height:`${(v/maxV)*70}px`,transition:"height 0.3s ease",boxShadow:i===chartData.length-1?"0 3px 0 rgba(0,0,0,0.2)":"none"}}/>
+                    <span style={{fontSize:9,color:T.textTer,...mono}}>{days[i]}</span>
+                  </div>
+                )
+              })}
             </div>
             <div style={{display:"flex",justifyContent:"space-between",marginTop:6}}>{["L","M","M","J","V","S","D"].map((d,i)=><span key={i} style={{fontSize:9,color:T.textTer,...mono}}>{d}</span>)}</div>
           </div>
           <div className="card-3d" style={{background:isPro?T.text:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",boxShadow:isPro?"0 8px 0 rgba(0,0,0,0.25),0 16px 40px rgba(0,0,0,0.12)":T.shadow}}>
             <p style={{fontSize:10,fontWeight:700,color:isPro?"rgba(255,255,255,0.4)":T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:"0.875rem"}}>Abonnement</p>
             <p style={{fontSize:18,fontWeight:800,color:isPro?"#fff":T.text,letterSpacing:-0.5,marginBottom:4}}>{isPro?"Plan Pro":"Plan Gratuit"}</p>
-            <p style={{fontSize:12,color:isPro?"rgba(255,255,255,0.5)":T.textTer,marginBottom:"1.25rem"}}>{isPro?"5€ / mois · Actif":`${Math.max(FREE_LIMIT-usageCount,0)} crédit(s) restant(s)`}</p>
+            <p style={{fontSize:12,color:isPro?"rgba(255,255,255,0.5)":T.textTer,marginBottom:"1.25rem"}}>{isPro?"5€ / mois · Actif":`${Math.max(FREE_LIMIT-usageCount,0)} crédit(s) restant(s) aujourd'hui`}</p>
             {isPro?<button onClick={()=>{setIsPro(false);toast("Annulé","warn")}} style={{fontFamily:"'Inter',sans-serif",height:34,width:"100%",background:"rgba(255,255,255,0.1)",color:"rgba(255,255,255,0.7)",border:"1px solid rgba(255,255,255,0.15)",borderRadius:7,fontSize:12,fontWeight:600,cursor:"pointer"}}>Annuler</button>
             :<DarkBtn full size="sm" onClick={()=>{setIsPro(true);toast("Bienvenue Pro !","success")}} style={{boxShadow:T.shadow3d}}>Passer au Pro →</DarkBtn>}
           </div>
@@ -1427,7 +1369,7 @@ function Dashboard({usageCount,isPro,setIsPro,transcripts,setTranscripts,setView
 /* ═══════════════════════════════════════
    ADMIN PANEL
 ═══════════════════════════════════════ */
-function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMaintenance,promoCodes,setPromoCodes}){
+function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMaintenance,promoCodes,setPromoCodes,counterMin,setCounterMin,counterMax,setCounterMax}){
   const [authed,setAuthed]=useState(false)
   const [pwd,setPwd]=useState("")
   const [pwdErr,setPwdErr]=useState(false)
@@ -1530,7 +1472,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
 
         {/* Tabs */}
         <div style={{display:"flex",gap:4,background:T.surface,padding:4,borderRadius:10,border:`1px solid ${T.border}`,marginBottom:"1.25rem",width:"fit-content"}}>
-          {[["users","👥 Utilisateurs"],["reviews","💬 Avis"],["banner","📢 Bannière"],["maintenance","🔧 Maintenance"],["stats","📊 Stats"],["promo","🎟️ Promos"]].map(([k,l])=>(
+          {[["users","👥 Utilisateurs"],["reviews","💬 Avis"],["banner","📢 Bannière"],["maintenance","🔧 Maintenance"],["counter","👁 Compteur"],["stats","📊 Stats"],["promo","🎟️ Promos"]].map(([k,l])=>(
             <button key={k} onClick={()=>setAdminTab(k)} style={{fontFamily:"'Inter',sans-serif",padding:"7px 18px",fontSize:13,fontWeight:600,background:adminTab===k?T.bgWhite:"transparent",color:adminTab===k?T.text:T.textTer,border:`1px solid ${adminTab===k?T.border:"transparent"}`,borderRadius:7,cursor:"pointer",transition:"all 0.15s",boxShadow:adminTab===k?T.shadow:"none"}}>{l}</button>
           ))}
         </div>
@@ -1764,6 +1706,30 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
               <DarkBtn onClick={()=>{setMaintenance(p=>({...p,enabled:true}));toast("Mode maintenance activé ⚠️","warn")}} style={{background:T.red,boxShadow:"0 4px 0 rgba(239,68,68,0.3)"}}>⚠️ Activer la maintenance</DarkBtn>
               <OutlineBtn onClick={()=>{setMaintenance(p=>({...p,enabled:false}));toast("Site remis en ligne ✓","success")}}>✓ Remettre en ligne</OutlineBtn>
             </div>
+          </div>
+        )}
+
+        {/* ── COUNTER TAB ── */}
+        {adminTab==="counter"&&(
+          <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:14,padding:"2rem",boxShadow:T.shadow}}>
+            <p style={{fontSize:14,fontWeight:700,color:T.text,marginBottom:4}}>Compteur de personnes actives</p>
+            <p style={{fontSize:13,color:T.textSec,marginBottom:"2rem"}}>Le compteur oscillera aléatoirement entre ces deux valeurs de façon organique.</p>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:20,marginBottom:"2rem"}}>
+              {[["Minimum",counterMin,setCounterMin,1,5000],["Maximum",counterMax,setCounterMax,100,10000]].map(([label,val,setter,min,max])=>(
+                <div key={label}>
+                  <p style={{fontSize:11,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:0.8,marginBottom:10}}>{label}</p>
+                  <div style={{display:"flex",alignItems:"center",gap:12}}>
+                    <input type="range" min={min} max={max} step={50} value={val} onChange={e=>setter(Number(e.target.value))} style={{flex:1,accentColor:T.text}}/>
+                    <span style={{fontSize:18,fontWeight:800,color:T.text,minWidth:68,textAlign:"right",...mono}}>{val.toLocaleString("fr-FR")}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div style={{background:T.surface,border:`1px solid ${T.border}`,borderRadius:12,padding:"1.25rem",marginBottom:"1.5rem",textAlign:"center"}}>
+              <p style={{fontSize:12,color:T.textSec,marginBottom:10}}>Aperçu en temps réel</p>
+              <LiveCounter adminMin={counterMin} adminMax={counterMax}/>
+            </div>
+            <DarkBtn onClick={()=>toast("Compteur mis à jour !","success")} style={{boxShadow:T.shadow3d}}>✓ Sauvegarder</DarkBtn>
           </div>
         )}
 
@@ -2202,6 +2168,8 @@ export default function App(){
     {id:2,code:"WELCOME",discount:"1 mois offert",type:"monthly",uses:12,maxUses:50,active:true,expires:"31/12/2025"},
     {id:3,code:"STUDENT25",discount:"25%",type:"monthly",uses:89,maxUses:200,active:false,expires:"30/09/2025"},
   ])
+  const [counterMin,setCounterMin]=useState(100)
+  const [counterMax,setCounterMax]=useState(2000)
 
   useEffect(()=>{
     if(!isLoggedIn&&!exitShown){
@@ -2228,11 +2196,11 @@ export default function App(){
           <AnnouncementBanner config={bannerConfig}/>
           {view!=="admin"&&<Nav view={view} setView={setView} isLoggedIn={isLoggedIn} setShowAuth={setShowAuth} isPro={isPro} logoClickCount={logoClickCount} setLogoClickCount={setLogoClickCount}/>}
           {view==="profile"  &&<ProfilePage setView={setView} isPro={isPro} usageCount={usageCount}/>}
-          {view==="landing"  &&<Landing  setView={setView} setShowAuth={setShowAuth} usageCount={usageCount} isPro={isPro} reviews={reviews} setReviews={setReviews}/>}
+          {view==="landing"  &&<Landing  setView={setView} setShowAuth={setShowAuth} usageCount={usageCount} isPro={isPro} reviews={reviews} setReviews={setReviews} adminCounterMin={counterMin} adminCounterMax={counterMax}/>}
           {view==="app"      &&<AppView  usageCount={usageCount} setUsageCount={setUsage} isPro={isPro} setShowAuth={setShowAuth} transcripts={transcripts} setTranscripts={setTxList}/>}
           {view==="dashboard"&&<Dashboard usageCount={usageCount} isPro={isPro} setIsPro={setIsPro} transcripts={transcripts} setTranscripts={setTxList} setView={setView}/>}
           {view==="status"   &&<StatusPage setView={setView}/>}
-          {view==="admin"    &&<AdminPanel setView={setView} bannerConfig={bannerConfig} setBannerConfig={setBannerConfig} maintenance={maintenance} setMaintenance={setMaintenance} promoCodes={promoCodes} setPromoCodes={setPromoCodes}/>}
+          {view==="admin"    &&<AdminPanel setView={setView} bannerConfig={bannerConfig} setBannerConfig={setBannerConfig} maintenance={maintenance} setMaintenance={setMaintenance} promoCodes={promoCodes} setPromoCodes={setPromoCodes} counterMin={counterMin} setCounterMin={setCounterMin} counterMax={counterMax} setCounterMax={setCounterMax}/>}
           {showAuth&&<AuthModal mode={showAuth} onClose={()=>setShowAuth(null)} onAuth={handleAuth}/>}
           {showExitIntent&&!isLoggedIn&&<ExitIntentPopup onClose={()=>setShowExitIntent(false)} onSignup={()=>{setShowExitIntent(false);setShowAuth("signup")}}/>}
         </>
