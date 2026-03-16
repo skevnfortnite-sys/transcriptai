@@ -1278,7 +1278,7 @@ export default function App(){
     darkText:false,
     link:"",
     linkLabel:"En profiter →"
-  }))
+  })
   const [maintenance,setMaintenance]=useState({
     enabled:false,
     title:"Site en maintenance",
