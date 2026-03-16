@@ -251,7 +251,7 @@ function ProfilePage({setView,isPro,usageCount}){
   }
   return(
     <div style={{minHeight:"100vh",background:T.bg}}>
-      <div style={{maxWidth:640,margin:"0 auto",padding:"2.5rem 2rem"}}>
+      <div style={{maxWidth:820,margin:"0 auto",padding:"2.5rem 2rem"}}>
         <div style={{marginBottom:"2rem",paddingBottom:"1.25rem",borderBottom:`1px solid ${T.border}`}}>
           <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:1.5,marginBottom:5,...mono}}>Mon compte</p>
           <h1 style={{fontSize:26,fontWeight:800,color:T.text,letterSpacing:-1.2}}>Profil</h1>
@@ -536,8 +536,8 @@ function FaqItem({item}){
 }
 function FAQ(){
   return(
-    <section style={{padding:"5.5rem 2rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
-      <div style={{maxWidth:680,margin:"0 auto"}}>
+    <section style={{padding:"5.5rem 4rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
+      <div style={{maxWidth:900,margin:"0 auto"}}>
         <div style={{textAlign:"center",marginBottom:"3rem"}}>
           <SectionLabel>FAQ</SectionLabel>
           <h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Questions fréquentes</h2>
@@ -567,7 +567,7 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
     <div style={{minHeight:"100vh",paddingTop:56}}>
 
       {/* ── HERO ── */}
-      <section className="grid-bg" style={{minHeight:"calc(100vh - 56px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"5rem 1.5rem 4rem",position:"relative",overflow:"hidden"}}>
+      <section className="grid-bg" style={{minHeight:"calc(100vh - 56px)",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"5rem 3rem 4rem",position:"relative",overflow:"hidden"}}>
 
         {/* Radial vignette */}
         <div style={{position:"absolute",inset:0,background:"radial-gradient(ellipse 80% 70% at 50% 45%,rgba(248,248,246,0) 0%,rgba(248,248,246,0.97) 100%)",pointerEvents:"none"}}/>
@@ -658,7 +658,7 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
         </div>
 
         {/* ── CENTER CONTENT ── */}
-        <div style={{maxWidth:700,width:"100%",textAlign:"center",position:"relative",zIndex:2,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center"}}>
+        <div style={{maxWidth:860,width:"100%",textAlign:"center",position:"relative",zIndex:2,margin:"0 auto",display:"flex",flexDirection:"column",alignItems:"center"}}>
           {/* Status pill */}
           <div className="fade-up" style={{display:"inline-flex",alignItems:"center",gap:8,background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:100,padding:"6px 18px",fontSize:12,fontWeight:500,color:T.textSec,marginBottom:"2rem",boxShadow:"0 3px 0 rgba(0,0,0,0.08),0 6px 16px rgba(0,0,0,0.05)"}}>
             <span style={{width:7,height:7,borderRadius:"50%",background:T.green,display:"inline-block",boxShadow:"0 0 6px rgba(34,197,94,0.6)"}}/>
@@ -675,7 +675,7 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
             }}>quelle vidéo YouTube</span>
           </h1>
 
-          <p className="fade-up-d2" style={{fontSize:16,color:T.textSec,lineHeight:1.8,maxWidth:480,margin:"0 auto 2.5rem",fontWeight:400}}>
+          <p className="fade-up-d2" style={{fontSize:16,color:T.textSec,lineHeight:1.8,maxWidth:600,margin:"0 auto 2.5rem",fontWeight:400}}>
             Collez un lien, obtenez une transcription propre. Résumé IA automatique, traduction, chat — tout inclus.
           </p>
 
@@ -683,7 +683,7 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
           <div className="fade-up-d3" style={{
             display:"flex",alignItems:"center",background:T.bgWhite,
             border:`1.5px solid ${focused?T.text:T.border}`,borderRadius:14,
-            padding:"6px 6px 6px 20px",maxWidth:620,margin:"0 auto 0.875rem",
+            padding:"6px 6px 6px 20px",maxWidth:720,margin:"0 auto 0.875rem",
             boxShadow:focused
               ?"0 8px 0 rgba(0,0,0,0.14),0 14px 30px rgba(0,0,0,0.1)"
               :"0 6px 0 rgba(0,0,0,0.10),0 10px 24px rgba(0,0,0,0.07)",
@@ -719,10 +719,10 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
       </section>
 
       {/* ── STEPS ── */}
-      <section style={{padding:"5.5rem 2rem",background:T.bg,borderTop:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
+      <section style={{padding:"5.5rem 4rem",background:T.bg,borderTop:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
         {/* bg decoration */}
         <div style={{position:"absolute",top:-60,right:-60,width:280,height:280,borderRadius:"50%",background:"radial-gradient(circle,rgba(99,102,241,0.04) 0%,transparent 70%)",pointerEvents:"none"}}/>
-        <div style={{maxWidth:900,margin:"0 auto"}}>
+        <div style={{maxWidth:1160,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:"3.5rem"}}>
             <SectionLabel>Comment ça marche</SectionLabel>
             <h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>3 étapes simples</h2>
@@ -756,8 +756,8 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
       </section>
 
       {/* ── USE CASES ── */}
-      <section style={{padding:"5.5rem 2rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
-        <div style={{maxWidth:920,margin:"0 auto"}}>
+      <section style={{padding:"5.5rem 4rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
+        <div style={{maxWidth:1160,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:"3rem"}}><SectionLabel>Cas d'usage</SectionLabel><h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Fait pour tout le monde</h2></div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:14}}>
             {useCases.map(u=>(
@@ -774,8 +774,8 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
       </section>
 
       {/* ── REVIEWS ── */}
-      <section style={{padding:"5.5rem 2rem",background:T.bg,borderTop:`1px solid ${T.border}`}}>
-        <div style={{maxWidth:860,margin:"0 auto"}}>
+      <section style={{padding:"5.5rem 4rem",background:T.bg,borderTop:`1px solid ${T.border}`}}>
+        <div style={{maxWidth:1160,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:"3rem"}}><SectionLabel>Témoignages</SectionLabel><h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Ils nous font confiance</h2></div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:14}}>
             {reviews.filter(r=>r.visible).map((r,i)=>{
@@ -801,8 +801,8 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
       </section>
 
       {/* ── PRICING ── */}
-      <section style={{padding:"5.5rem 2rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
-        <div style={{maxWidth:560,margin:"0 auto"}}>
+      <section style={{padding:"5.5rem 4rem",background:T.bgWhite,borderTop:`1px solid ${T.border}`}}>
+        <div style={{maxWidth:760,margin:"0 auto"}}>
           <div style={{textAlign:"center",marginBottom:"2rem"}}><SectionLabel>Tarifs</SectionLabel><h2 style={{fontSize:"2rem",fontWeight:800,color:T.text,letterSpacing:-1.2}}>Simple et honnête</h2></div>
           {/* Annual toggle */}
           <div style={{display:"flex",justifyContent:"center",alignItems:"center",gap:12,marginBottom:"2.5rem"}}>
@@ -848,9 +848,9 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews}){
       <FAQ/>
 
       {/* ── FINAL CTA ── */}
-      <section className="grid-bg" style={{padding:"6rem 2rem",borderTop:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
+      <section className="grid-bg" style={{padding:"6rem 4rem",borderTop:`1px solid ${T.border}`,position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,background:"rgba(248,248,246,0.6)",pointerEvents:"none"}}/>
-        <div style={{maxWidth:520,margin:"0 auto",textAlign:"center",position:"relative",zIndex:1}}>
+        <div style={{maxWidth:700,margin:"0 auto",textAlign:"center",position:"relative",zIndex:1}}>
           <h2 style={{fontSize:"2.2rem",fontWeight:800,color:T.text,letterSpacing:-1.2,marginBottom:"1rem"}}>Prêt à commencer ?</h2>
           <p style={{fontSize:15,color:T.textSec,lineHeight:1.7,marginBottom:"2.5rem"}}>Rejoignez des milliers d'utilisateurs qui transcrivent chaque jour.</p>
           <div style={{display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap"}}>
@@ -1094,7 +1094,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
 
       {/* URL BAR */}
       <div style={{background:T.bgWhite,borderBottom:`1px solid ${T.border}`,padding:"0.875rem 2rem",boxShadow:"0 1px 0 rgba(0,0,0,0.04)"}}>
-        <div style={{maxWidth:820,margin:"0 auto"}}>
+        <div style={{maxWidth:1100,margin:"0 auto"}}>
           <div style={{display:"flex",gap:8,alignItems:"center",background:T.bg,border:`1px solid ${T.border}`,borderRadius:10,padding:"5px 5px 5px 14px",boxShadow:"inset 0 1px 3px rgba(0,0,0,0.04)"}}>
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" style={{flexShrink:0,marginRight:4}}>
               <path d="M15 10l4.553-2.069A1 1 0 0 1 21 8.845v6.31a1 1 0 0 1-1.447.894L15 14M3 8a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8z" stroke={T.textTer} strokeWidth="1.5" strokeLinecap="round"/>
@@ -1113,7 +1113,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
         </div>
       </div>
 
-      <div style={{maxWidth:820,margin:"0 auto",padding:"1.5rem 2rem"}}>
+      <div style={{maxWidth:1100,margin:"0 auto",padding:"1.5rem 2rem"}}>
 
         {/* IDLE */}
         {phase==="idle"&&(
@@ -1349,7 +1349,7 @@ function Dashboard({usageCount,isPro,setIsPro,transcripts,setTranscripts,setView
 
   return(
     <div style={{minHeight:"100vh",background:T.bg}}>
-      <div style={{maxWidth:900,margin:"0 auto",padding:"2rem 2rem"}}>
+      <div style={{maxWidth:1160,margin:"0 auto",padding:"2rem 2rem"}}>
         <div style={{marginBottom:"1.75rem",paddingBottom:"1.25rem",borderBottom:`1px solid ${T.border}`}}>
           <SectionLabel>Tableau de bord</SectionLabel>
           <h1 style={{fontSize:26,fontWeight:800,color:T.text,letterSpacing:-1.2}}>Vue d'ensemble</h1>
@@ -1499,7 +1499,7 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
         </div>
       )}
 
-      <div style={{maxWidth:1000,margin:"0 auto",padding:"2rem"}}>
+      <div style={{maxWidth:1300,margin:"0 auto",padding:"2rem"}}>
         {/* Admin header */}
         <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:"2rem",paddingBottom:"1.5rem",borderBottom:`1px solid ${T.border}`}}>
           <div style={{display:"flex",alignItems:"center",gap:14}}>
@@ -1997,7 +1997,7 @@ function StatusPage({setView}){
 
   return(
     <div style={{minHeight:"100vh",background:T.bg}}>
-      <div style={{maxWidth:720,margin:"0 auto",padding:"3rem 2rem"}}>
+      <div style={{maxWidth:960,margin:"0 auto",padding:"3rem 2rem"}}>
         <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",color:T.textSec,fontSize:13,cursor:"pointer",marginBottom:"2rem",display:"flex",alignItems:"center",gap:6}}>← Retour</button>
         {/* Header */}
         <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:18,padding:"2rem",marginBottom:16,boxShadow:T.shadow,textAlign:"center"}}>
