@@ -267,7 +267,7 @@ function LiveCounter({adminMin=100,adminMax=2000}){
 function ProfilePage({setView,isPro,usageCount,user,onLogout}){
   const [name,setName]=useState(user?.name||"")
   const [email,setEmail]=useState(user?.email||"")
-  const [bio,setBio]=useState("Créateur de contenu & passionné de productivité.")
+  const [bio,setBio]=useState("")
   const [saved,setSaved]=useState(false)
   const [avatarColor,setAvatarColor]=useState("#0A0A0A")
   const colors=["#0A0A0A","#6366F1","#F97316","#22C55E","#EF4444","#8B5CF6","#F59E0B","#EC4899"]
@@ -275,7 +275,7 @@ function ProfilePage({setView,isPro,usageCount,user,onLogout}){
   async function save(){
     if(user?.id&&user?.token){
       await sb("profiles?id=eq."+user.id,{method:"PATCH",headers:{"Prefer":"return=minimal","Authorization":`Bearer ${user.token}`},body:JSON.stringify({name,email})})
-      const s=JSON.parse(localStorage.getItem("tai_session")||"{}");localStorage.setItem("tai_session",JSON.stringify({...s,name,email}))
+      const s=JSON.parse(localStorage.getItem("tai_session") || "{}");localStorage.setItem("tai_session",JSON.stringify({...s,name,email}))
     }
     setSaved(true);setTimeout(()=>setSaved(false),2000)
   }
@@ -923,11 +923,6 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews,adminC
 function AppView({usageCount,setUsageCount,isPro,setShowAuth,transcripts,setTranscripts}){
   // Demo data removed
 
-  const DEMO_CITATIONS = [
-    {text:"Les personnes ultra-productives ne gèrent pas leur temps — elles le conçoivent.",context:"Distinction fondamentale entre subir et choisir son organisation"},
-    {text:"Le cerveau n'est pas une machine. Les meilleurs performers protègent leur récupération avec la même rigueur qu'une réunion importante.",context:"L'importance négligée du repos intentionnel"},
-    {text:"Chaque individu a une fenêtre de deux à quatre heures par jour où ses capacités cognitives sont au sommet.",context:"Science du rythme circadien appliquée à la productivité"},
-  ]
 
   const [url,setUrl]=useState("")
   const [phase,setPhase]=useState("idle")
@@ -936,28 +931,12 @@ function AppView({usageCount,setUsageCount,isPro,setShowAuth,transcripts,setTran
   const [tx,setTx]=useState(null)
   const [tab,setTab]=useState("transcript")
   const [txTab,setTxTab]=useState("raw")
-  const [aiOut,setAiOut]=useState(null)
-  const [aiTool,setAiTool]=useState(null)
-  const [aiLoading,setAiLoad]=useState(false)
   const [error,setError]=useState("")
   const [copied,setCopied]=useState(false)
-  const [chatHistory,setChatHistory]=useState([
-    {role:"user",content:"Quelle est la 3ème habitude mentionnée ?"},
-    {role:"assistant",content:"La 3ème habitude est la gestion de l'énergie plutôt que du temps. L'idée est d'identifier ses pics d'énergie cognitifs — une fenêtre de 2 à 4h par jour selon la science du rythme circadien — et d'aligner ses tâches les plus exigeantes sur ces moments."},
-  ])
-  const [chatInput,setChatInput]=useState("")
-  const [chatLoading,setChatLoad]=useState(false)
-  const [citations,setCitations]=useState(DEMO_CITATIONS)
-  const [citeLoading,setCiteLoad]=useState(false)
-  const [targetLang,setTargetLang]=useState("English")
-  const [translated,setTranslated]=useState(null)
-  const [transLoading,setTransLoad]=useState(false)
-  const [detectedLang,setDetectedLang]=useState("Français")
   const [autoSummary,setAutoSummary]=useState(null)
   const [autoSumLoading,setAutoSumLoad]=useState(false)
   const [autoSumCopied,setAutoSumCopied]=useState(false)
   const [showPaywall,setShowPaywall]=useState(false)
-  const chatEndRef=useRef()
   const elapsedRef=useRef()
 
   const canGo=isPro||usageCount<FREE_LIMIT
@@ -997,43 +976,7 @@ function AppView({usageCount,setUsageCount,isPro,setShowAuth,transcripts,setTran
     }
   }
 
-  const aiTools=[{k:"keypoints",l:"Points clés"},{k:"article",l:"Article"},{k:"social",l:"Social"},{k:"tldr",l:"TL;DR"}]
-  const aiPrompts={keypoints:t=>`6 points clés en français:\n\n${t}`,article:t=>`Article de blog structuré en français:\n\n${t}`,social:t=>`3 posts (LinkedIn, X, Instagram) en français:\n\n${t}`,tldr:t=>`Une phrase TL;DR percutante en français:\n\n${t}`}
 
-  async function runAI(k){
-    if(!tx)return;setAiTool(k);setAiLoad(true);setAiOut(null)
-    try{
-      const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,messages:[{role:"user",content:aiPrompts[k](tx.rawTranscript)}]})})
-      const d=await r.json();setAiOut(d.content[0].text);toast(`${aiTools.find(t=>t.k===k)?.l} généré !`,"success")
-    }catch{setAiOut("Erreur.")}
-    setAiLoad(false)
-  }
-  async function sendChat(){
-    if(!chatInput.trim()||!tx)return
-    const msg=chatInput.trim();setChatInput("")
-    setChatHistory(p=>[...p,{role:"user",content:msg}]);setChatLoad(true)
-    try{
-      const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:500,messages:[{role:"user",content:`Réponds en français à cette question sur la transcription:\n\n${tx.rawTranscript}\n\nQuestion: ${msg}`}]})})
-      const d=await r.json();setChatHistory(p=>[...p,{role:"assistant",content:d.content[0].text}])
-    }catch{setChatHistory(p=>[...p,{role:"assistant",content:"Erreur."}])}
-    setChatLoad(false)
-  }
-  async function extractCitations(){
-    if(!tx)return;setCiteLoad(true);setCitations([])
-    try{
-      const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:700,messages:[{role:"user",content:`Extrais 5 citations mémorables. JSON valide:\n{"citations":[{"text":"...","context":"..."}]}\n\n${tx.rawTranscript}`}]})})
-      const d=await r.json();const p=JSON.parse(d.content[0].text.replace(/```json|```/g,"").trim());setCitations(p.citations||[]);toast("Citations extraites !","success")
-    }catch{setCitations([{text:"Erreur.",context:""}])}
-    setCiteLoad(false)
-  }
-  async function translate(){
-    if(!tx)return;setTransLoad(true);setTranslated(null)
-    try{
-      const r=await fetch("/api/claude",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:900,messages:[{role:"user",content:`Traduis en ${targetLang}:\n\n${tx.rawTranscript}`}]})})
-      const d=await r.json();setTranslated(d.content[0].text);toast(`Traduit en ${targetLang} !`,"success")
-    }catch{setTranslated("Erreur.")}
-    setTransLoad(false)
-  }
   function copy(text){navigator.clipboard?.writeText(text);setCopied(true);setTimeout(()=>setCopied(false),1400);toast("Copié !","info")}
   function dl(ext){
     if(!tx)return
