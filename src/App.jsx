@@ -1231,72 +1231,54 @@ export default function App(){
 
   // ── Session persistence ──
   useEffect(()=>{
+    // If Supabase not configured, skip auth loading
+    if(!SUPA_URL||!SUPA_KEY){setAuthLoading(false);return}
     const stored = localStorage.getItem("tai_session")
     if(stored){
       try{
         const sess = JSON.parse(stored)
-        // Verify token is still valid
+        setUser(sess); setLogged(true); setIsPro(sess.plan==="pro"); setUsage(sess.transcriptions_count||0)
+        // Verify token still valid in background
         sbGetUser(sess.token).then(u=>{
-          if(u&&u.id){
-            setUser(sess)
-            setLogged(true)
-            setIsPro(sess.plan==="pro")
-            setUsage(sess.transcriptions_count||0)
-            // Refresh profile from DB
-            sb("profiles?id=eq."+u.id+"&select=*").then(r=>{
-              if(r?.data?.[0]){
-                const p=r.data[0]
-                const updated={...sess,name:p.name,plan:p.plan,transcriptions_count:p.transcriptions_count,credits:p.credits}
-                setUser(updated)
-                setIsPro(p.plan==="pro")
-                setUsage(p.transcriptions_count||0)
-                localStorage.setItem("tai_session",JSON.stringify(updated))
-              }
-            })
-          } else {
-            localStorage.removeItem("tai_session")
-          }
+          if(!u||!u.id){localStorage.removeItem("tai_session");setLogged(false);setUser(null)}
           setAuthLoading(false)
-        })
+        }).catch(()=>setAuthLoading(false))
       }catch{localStorage.removeItem("tai_session");setAuthLoading(false)}
     } else {
-      setAuthLoading(false)
-    }
-    // Handle OAuth redirect
-    const hash = window.location.hash
-    if(hash.includes("access_token")){
-      const params = new URLSearchParams(hash.replace("#","?"))
-      const token = params.get("access_token")
-      if(token){
-        sbGetUser(token).then(async u=>{
-          if(u?.id){
-            // Upsert profile
-            await sb("profiles?id=eq."+u.id,{method:"GET"}).then(async r=>{
-              if(!r?.data?.length){
-                await sb("profiles",{method:"POST",body:JSON.stringify({id:u.id,name:u.user_metadata?.name||u.email?.split("@")[0],email:u.email,plan:"free",credits:3})})
+      // Handle OAuth redirect
+      const hash = window.location.hash
+      if(hash.includes("access_token")){
+        const params = new URLSearchParams(hash.replace("#","?"))
+        const token = params.get("access_token")
+        if(token){
+          sbGetUser(token).then(async u=>{
+            if(u?.id){
+              const profile = await sb("profiles?id=eq."+u.id+"&select=*")
+              const p = profile?.data?.[0]||{}
+              if(!profile?.data?.length){
+                await sb("profiles",{method:"POST",body:JSON.stringify({id:u.id,name:u.user_metadata?.name||u.email?.split("@")[0],email:u.email,plan:"free",credits:3,transcriptions_count:0})})
               }
-            })
-            const profile = await sb("profiles?id=eq."+u.id+"&select=*")
-            const p = profile?.data?.[0]||{}
-            const sess = {id:u.id,email:u.email,name:p.name||u.user_metadata?.name||u.email?.split("@")[0],token,plan:p.plan||"free",transcriptions_count:p.transcriptions_count||0,credits:p.credits||3}
-            localStorage.setItem("tai_session",JSON.stringify(sess))
-            setUser(sess); setLogged(true); setIsPro(sess.plan==="pro"); setUsage(sess.transcriptions_count||0)
-            window.location.hash = ""
-            toast("Connexion Google réussie !","success")
-          }
-          setAuthLoading(false)
-        })
-      }
+              const sess = {id:u.id,email:u.email,name:p.name||u.user_metadata?.name||u.email?.split("@")[0],token,plan:p.plan||"free",transcriptions_count:p.transcriptions_count||0,credits:p.credits||3}
+              localStorage.setItem("tai_session",JSON.stringify(sess))
+              setUser(sess); setLogged(true); setIsPro(sess.plan==="pro"); setUsage(sess.transcriptions_count||0)
+              window.location.hash = ""
+              toast("Connexion réussie !","success")
+            }
+            setAuthLoading(false)
+          }).catch(()=>setAuthLoading(false))
+        } else { setAuthLoading(false) }
+      } else { setAuthLoading(false) }
     }
   },[])
+
   const [bannerConfig,setBannerConfig]=useState({
     enabled:true,
-    text:"🎉 <strong>Offre de lancement</strong> — 50% sur le plan annuel · Code <span style=\"background:rgba(255,255,255,0.15);padding:1px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px\">LAUNCH50</span>",
+    text:"🎉 Offre de lancement — 50% sur le plan annuel · Code LAUNCH50",
     bg:"#0A0A0A",
     darkText:false,
     link:"",
     linkLabel:"En profiter →"
-  })
+  }))
   const [maintenance,setMaintenance]=useState({
     enabled:false,
     title:"Site en maintenance",
