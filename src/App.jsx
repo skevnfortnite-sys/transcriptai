@@ -1151,11 +1151,7 @@ const COMPANY = {
 }
 const LEGAL_CONTENT = {
   mentions:{title:"Mentions légales",sections:[
-    {h:"Éditeur du site",p:"Le site TranscriptIA est édité par KEVININDUSTRIE, Société par Actions Simplifiée (SAS) au capital de 500 €, immatriculée au Registre du Commerce et des Sociétés sous le numéro SIREN 932 737 992.
-
-Siège social : Paris, France
-Directeur de la publication : Kévin Nedzvedsky
-Contact : contact@transcriptia.app"},
+    {h:"Éditeur du site",p:"Le site TranscriptIA est édité par KEVININDUSTRIE, Société par Actions Simplifiée (SAS) au capital de 500 €, immatriculée au Registre du Commerce et des Sociétés sous le numéro SIREN 932 737 992.\n\nSiège social : Paris, France\nDirecteur de la publication : Kévin Nedzvedsky\nContact : contact@transcriptia.app"},
     {h:"Hébergement",p:"Le site est hébergé par Vercel Inc., 340 Pine Street Suite 701, San Francisco, CA 94104, États-Unis."},
     {h:"Propriété intellectuelle",p:"Le contenu du site TranscriptIA est la propriété exclusive de KEVININDUSTRIE et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle. Toute reproduction est interdite sans autorisation préalable."},
     {h:"Données personnelles",p:"Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contact : contact@transcriptia.app"},
@@ -1170,19 +1166,10 @@ Contact : contact@transcriptia.app"},
   ]},
   rgpd:{title:"Politique de confidentialité",sections:[
     {h:"1. Responsable du traitement",p:"KEVININDUSTRIE (SIREN : 932 737 992), représentée par Kévin Nedzvedsky. Contact : contact@transcriptia.app"},
-    {h:"2. Données collectées",p:"Nous collectons :
-• Données d'identification : nom, adresse email
-• Données de navigation : adresses IP, pages visitées
-• Données d'utilisation : URLs transcrites, historique
-• Données de paiement : traitées exclusivement par Stripe"},
-    {h:"3. Finalités",p:"Vos données sont utilisées pour :
-• Fournir et améliorer le service
-• Gérer votre compte et votre abonnement
-• Respecter nos obligations légales"},
+    {h:"2. Données collectées",p:"Nous collectons :\n• Données d'identification : nom, adresse email\n• Données de navigation : adresses IP, pages visitées\n• Données d'utilisation : URLs transcrites, historique\n• Données de paiement : traitées exclusivement par Stripe"},
+    {h:"3. Finalités",p:"Vos données sont utilisées pour :\n• Fournir et améliorer le service\n• Gérer votre compte et votre abonnement\n• Respecter nos obligations légales"},
     {h:"4. Conservation",p:"Vos données sont conservées pendant la durée d'utilisation du service, puis archivées 3 ans après la fin du contrat."},
-    {h:"5. Vos droits",p:"Conformément au RGPD : droit d'accès, rectification, suppression, portabilité, limitation, opposition.
-Contact : contact@transcriptia.app
-Réclamation CNIL : www.cnil.fr"},
+    {h:"5. Vos droits",p:"Conformément au RGPD : droit d'accès, rectification, suppression, portabilité, limitation, opposition.\nContact : contact@transcriptia.app\nRéclamation CNIL : www.cnil.fr"},
     {h:"6. Cookies",p:"Nous utilisons uniquement des cookies essentiels au fonctionnement du service. Aucun cookie publicitaire ou de tracking tiers n'est utilisé."},
     {h:"7. Sous-traitants",p:"Supabase (base de données, USA), Vercel (hébergement, USA), Stripe (paiement, USA), Anthropic (IA — transcriptions anonymisées uniquement)."},
   ]},
