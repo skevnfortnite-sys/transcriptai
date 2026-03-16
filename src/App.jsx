@@ -1,5 +1,42 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 
+/* ═══════════════════════════════════════════════
+   SUPABASE CLIENT
+═══════════════════════════════════════════════ */
+const SUPA_URL = import.meta.env.VITE_SUPABASE_URL || ""
+const SUPA_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || ""
+
+async function sb(path, opts={}){
+  if(!SUPA_URL||!SUPA_KEY) return {data:null,error:"non configuré"}
+  const res = await fetch(`${SUPA_URL}/rest/v1/${path}`,{
+    headers:{"apikey":SUPA_KEY,"Authorization":`Bearer ${SUPA_KEY}`,"Content-Type":"application/json","Prefer":"return=representation",...(opts.headers||{})},
+    ...opts
+  })
+  const data = res.ok ? await res.json() : null
+  return {data, error: res.ok?null:await res.text()}
+}
+async function sbSignUp(email,password,name){
+  const res=await fetch(`${SUPA_URL}/auth/v1/signup`,{method:"POST",headers:{"apikey":SUPA_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password,data:{name}})})
+  return res.json()
+}
+async function sbSignIn(email,password){
+  const res=await fetch(`${SUPA_URL}/auth/v1/token?grant_type=password`,{method:"POST",headers:{"apikey":SUPA_KEY,"Content-Type":"application/json"},body:JSON.stringify({email,password})})
+  return res.json()
+}
+async function sbSignOut(token){
+  await fetch(`${SUPA_URL}/auth/v1/logout`,{method:"POST",headers:{"apikey":SUPA_KEY,"Authorization":`Bearer ${token}`}})
+}
+async function sbGetUser(token){
+  const res=await fetch(`${SUPA_URL}/auth/v1/user`,{headers:{"apikey":SUPA_KEY,"Authorization":`Bearer ${token}`}})
+  return res.ok?res.json():null
+}
+function sbGoogleLogin(){
+  if(!SUPA_URL){toast("Supabase non configuré","error");return}
+  const redir=encodeURIComponent(window.location.origin+"/app")
+  window.location.href=`${SUPA_URL}/auth/v1/authorize?provider=google&redirect_to=${redir}`
+}
+
+
 /* ═══════════════════════════════════════
    TOKENS
 ═══════════════════════════════════════ */
@@ -227,15 +264,21 @@ function LiveCounter({adminMin=100,adminMax=2000}){
 /* ═══════════════════════════════════════
    PROFILE PAGE
 ═══════════════════════════════════════ */
-function ProfilePage({setView,isPro,usageCount}){
-  const [name,setName]=useState("Skevn Fortnite")
-  const [email,setEmail]=useState("skevn@gmail.com")
+function ProfilePage({setView,isPro,usageCount,user,onLogout}){
+  const [name,setName]=useState(user?.name||"")
+  const [email,setEmail]=useState(user?.email||"")
   const [bio,setBio]=useState("Créateur de contenu & passionné de productivité.")
   const [saved,setSaved]=useState(false)
   const [avatarColor,setAvatarColor]=useState("#0A0A0A")
   const colors=["#0A0A0A","#6366F1","#F97316","#22C55E","#EF4444","#8B5CF6","#F59E0B","#EC4899"]
 
-  function save(){setSaved(true);setTimeout(()=>setSaved(false),2000)}
+  async function save(){
+    if(user?.id&&user?.token){
+      await sb("profiles?id=eq."+user.id,{method:"PATCH",headers:{"Prefer":"return=minimal","Authorization":`Bearer ${user.token}`},body:JSON.stringify({name,email})})
+      const s=JSON.parse(localStorage.getItem("tai_session")||"{}");localStorage.setItem("tai_session",JSON.stringify({...s,name,email}))
+    }
+    setSaved(true);setTimeout(()=>setSaved(false),2000)
+  }
   function Field({label,value,onChange,multiline}){
     const [f,setF]=useState(false)
     const base={fontFamily:"'Inter',sans-serif",width:"100%",background:T.bg,border:`1.5px solid ${f?T.text:T.border}`,borderRadius:9,color:T.text,fontSize:14,outline:"none",transition:"all 0.15s",boxShadow:f?"0 4px 0 rgba(0,0,0,0.08)":"none"}
@@ -295,6 +338,10 @@ function ProfilePage({setView,isPro,usageCount}){
           </div>
           {!isPro&&<DarkBtn style={{boxShadow:T.shadow3d}}>Passer au Pro →</DarkBtn>}
         </div>
+        <button onClick={onLogout} style={{fontFamily:"'Inter',sans-serif",marginTop:"1.5rem",height:40,padding:"0 20px",background:"transparent",border:`1px solid ${T.border}`,borderRadius:9,fontSize:13,fontWeight:500,color:T.red,cursor:"pointer",display:"flex",alignItems:"center",gap:7}}>
+          ↩ Se déconnecter
+        </button>
+        </div>
       </div>
     </div>
   )
@@ -303,19 +350,8 @@ function ProfilePage({setView,isPro,usageCount}){
 /* ═══════════════════════════════════════
    FAKE USERS DB (for admin)
 ═══════════════════════════════════════ */
-const INITIAL_USERS = [
-  {id:1,name:"Marie Rousseau",email:"marie.rousseau@gmail.com",plan:"pro",credits:999,joined:"12/01/2025",transcriptions:47,banned:false,avatar:"MR"},
-  {id:2,name:"Thomas Keller",email:"t.keller@outlook.fr",plan:"free",credits:1,joined:"03/03/2025",transcriptions:2,banned:false,avatar:"TK"},
-  {id:3,name:"Sophie Chen",email:"sophie.chen@yahoo.fr",plan:"pro",credits:999,joined:"15/02/2025",transcriptions:103,banned:false,avatar:"SC"},
-  {id:4,name:"Lucas Martin",email:"lucas.m@protonmail.com",plan:"free",credits:0,joined:"20/03/2025",transcriptions:3,banned:false,avatar:"LM"},
-  {id:5,name:"Amina Diallo",email:"amina.diallo@gmail.com",plan:"free",credits:2,joined:"01/04/2025",transcriptions:1,banned:false,avatar:"AD"},
-  {id:6,name:"Pierre Dupont",email:"p.dupont@sfr.fr",plan:"pro",credits:999,joined:"05/01/2025",transcriptions:88,banned:true,avatar:"PD"},
-]
-const INITIAL_REVIEWS = [
-  {id:1,author:"Marie R.",role:"Étudiante en master",text:"J'utilise TranscriptIA tous les jours pour mes cours. En 10 secondes j'ai mes notes, c'est bluffant.",stars:5,visible:true},
-  {id:2,author:"Thomas K.",role:"Créateur YouTube",text:"Je génère mes articles de blog directement depuis mes vidéos. J'ai multiplié mon contenu par 3 sans effort.",stars:5,visible:true},
-  {id:3,author:"Sophie C.",role:"Journaliste freelance",text:"L'horodatage automatique me fait gagner des heures sur chaque interview. Indispensable pour mon travail.",stars:5,visible:true},
-]
+const INITIAL_USERS = []
+const INITIAL_REVIEWS = []
 
 /* ═══════════════════════════════════════
    PRIMITIVES
@@ -460,7 +496,7 @@ function PaywallModal({onClose,onSignup}){
 /* ═══════════════════════════════════════
    NAV
 ═══════════════════════════════════════ */
-function Nav({view,setView,isLoggedIn,setShowAuth,isPro,logoClickCount,setLogoClickCount}){
+function Nav({view,setView,isLoggedIn,setShowAuth,isPro,logoClickCount,setLogoClickCount,user,onLogout}){
   function handleLogoClick(){
     const next=logoClickCount+1
     setLogoClickCount(next)
@@ -496,8 +532,11 @@ function Nav({view,setView,isLoggedIn,setShowAuth,isPro,logoClickCount,setLogoCl
         {isLoggedIn?(
           <div style={{display:"flex",alignItems:"center",gap:8}}>
             {isPro&&<div style={{display:"flex",alignItems:"center",gap:5,background:"#F0FDF4",border:"1px solid #BBF7D0",borderRadius:6,padding:"4px 10px"}}><div style={{width:5,height:5,borderRadius:"50%",background:T.green}}/><span style={{fontSize:11,fontWeight:700,color:"#166534"}}>PRO</span></div>}
-            <div onClick={()=>setView("profile")} style={{width:32,height:32,borderRadius:"50%",background:T.text,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 0 rgba(0,0,0,0.3)"}}>
-              <span style={{color:"#fff",fontSize:12,fontWeight:700}}>SK</span>
+            <div style={{position:"relative",display:"flex",alignItems:"center",gap:6}}>
+              <div onClick={()=>setView("profile")} title={user?.name||"Profil"} style={{width:32,height:32,borderRadius:"50%",background:T.text,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",boxShadow:"0 2px 0 rgba(0,0,0,0.3)"}}>
+                <span style={{color:"#fff",fontSize:12,fontWeight:700}}>{user?.name?user.name.split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2):"SK"}</span>
+              </div>
+              <button onClick={onLogout} title="Se déconnecter" style={{background:"transparent",border:`1px solid ${T.border}`,borderRadius:7,padding:"5px 9px",fontSize:11,color:T.textSec,cursor:"pointer",fontWeight:500,fontFamily:"'Inter',sans-serif"}}>↩</button>
             </div>
           </div>
         ):(
@@ -864,9 +903,13 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews,adminC
       {/* ── FOOTER ── */}
       <footer style={{borderTop:`1px solid ${T.border}`,padding:"2rem",background:T.bgWhite,display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:12}}>
         <Logo onClick={()=>{}}/>
-        <p style={{fontSize:12,color:T.textTer}}>© 2025 TranscriptIA · Tous droits réservés</p>
+        <p style={{fontSize:12,color:T.textTer}}>© 2025 KEVININDUSTRIE · Tous droits réservés</p>
         <div style={{display:"flex",gap:"1.5rem",alignItems:"center"}}>
-          {["Confidentialité","CGU","Contact"].map(t=><span key={t} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>{t}</span>)}
+          <span onClick={()=>setView("mentions")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>Mentions légales</span>
+          <span onClick={()=>setView("cgu")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>CGU</span>
+          <span onClick={()=>setView("cgv")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>CGV</span>
+          <span onClick={()=>setView("rgpd")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>Confidentialité</span>
+          <a href="mailto:contact@transcriptia.app" style={{fontSize:12,color:T.textTer,textDecoration:"none"}}>Contact</a>
           <span onClick={()=>setView("status")} style={{fontSize:12,color:T.textTer,cursor:"pointer"}}>Statut</span>
         </div>
       </footer>
@@ -878,45 +921,7 @@ function Landing({setView,setShowAuth,usageCount,isPro,reviews,setReviews,adminC
    APP VIEW
 ═══════════════════════════════════════ */
 function AppView({usageCount,setUsageCount,isPro,setShowAuth,transcripts,setTranscripts}){
-  const DEMO_TX = {
-    title:"5 habitudes des personnes ultra-productives",
-    duration:"14:32",
-    channel:"Thomas Frank — FR",
-    detectedLang:"Français",
-    rawTranscript:`Bonjour et bienvenue sur cette vidéo. Aujourd'hui, nous allons explorer ensemble les cinq habitudes fondamentales que partagent les personnes les plus productives au monde. Après avoir étudié des centaines de biographies, analysé des dizaines d'études scientifiques et interviewé plus de cinquante entrepreneurs à succès, j'ai pu identifier des patterns récurrents fascinants.
-
-La première habitude, et sans doute la plus puissante, c'est le "time-blocking". Les personnes ultra-productives ne gèrent pas leur temps — elles le conçoivent. Elles bloquent des plages horaires dédiées à leurs tâches les plus importantes, généralement le matin, quand l'énergie cognitive est au maximum. Elon Musk, par exemple, divise sa journée en blocs de cinq minutes. Bill Gates, lui, planifie ses semaines entières à l'avance.
-
-La deuxième habitude, c'est la règle des deux minutes, popularisée par David Allen dans son livre "Getting Things Done". Si une tâche prend moins de deux minutes, faites-la immédiatement. Cette règle simple élimine l'accumulation de micro-tâches qui créent une charge mentale invisible mais épuisante.
-
-Troisièmement, les personnes productives gèrent leur énergie, pas seulement leur temps. Elles identifient leurs pics d'énergie et alignent leurs tâches les plus exigeantes sur ces moments. La science du rythme circadien nous montre que chaque individu a une fenêtre de deux à quatre heures par jour où ses capacités cognitives sont au sommet.
-
-La quatrième habitude, c'est la pratique de la révision hebdomadaire. Chaque dimanche soir ou lundi matin, ils font un bilan complet : ce qui a fonctionné, ce qui n'a pas fonctionné, et ce qu'ils vont ajuster la semaine suivante. C'est un système de feedback personnel qui permet une amélioration continue.
-
-Enfin, la cinquième habitude — et celle que la plupart des gens négligent — c'est la protection active du temps de récupération. Le cerveau n'est pas une machine. Les meilleurs performers incluent délibérément des pauses, du sport, du sommeil de qualité et des moments de déconnexion totale dans leur agenda, avec la même rigueur qu'une réunion importante.`,
-    timestamped:[
-      {time:"0:00",text:"Introduction aux 5 habitudes des personnes ultra-productives."},
-      {time:"0:42",text:"Habitude #1 : Le time-blocking — concevoir son temps plutôt que le subir."},
-      {time:"2:15",text:"Elon Musk divise sa journée en blocs de 5 minutes, Bill Gates planifie ses semaines entières."},
-      {time:"3:48",text:"Habitude #2 : La règle des 2 minutes de David Allen — agir immédiatement sur les petites tâches."},
-      {time:"5:30",text:"Habitude #3 : Gérer son énergie, pas seulement son temps. Identifier ses pics cognitifs."},
-      {time:"7:12",text:"La science du rythme circadien : une fenêtre de 2 à 4h par jour pour les tâches exigeantes."},
-      {time:"9:05",text:"Habitude #4 : La révision hebdomadaire — bilan, ajustements, amélioration continue."},
-      {time:"11:20",text:"Habitude #5 : Protéger activement le temps de récupération. Sommeil, sport, déconnexion."},
-      {time:"13:00",text:"Le cerveau n'est pas une machine — les meilleurs performers le savent."},
-      {time:"14:00",text:"Conclusion et récapitulatif des 5 habitudes à adopter dès cette semaine."},
-    ]
-  }
-  const DEMO_SUMMARY = `**En bref**
-Les personnes ultra-productives ne font pas plus — elles font mieux, grâce à des systèmes intentionnels.
-
-**Résumé**
-Cette vidéo présente cinq habitudes partagées par les personnes les plus efficaces au monde, issues de l'étude de biographies, de recherches scientifiques et d'interviews d'entrepreneurs. Le time-blocking, la règle des 2 minutes, la gestion de l'énergie, la révision hebdomadaire et la récupération active forment un système cohérent et reproductible.
-
-**Points essentiels**
-- Le time-blocking consiste à concevoir son agenda en blocs dédiés, pas à réagir aux événements
-- La règle des 2 minutes élimine l'accumulation invisible de micro-tâches épuisantes
-- Aligner les tâches exigeantes sur ses pics d'énergie cognitifs naturels démultiplie l'efficacité`
+  // Demo data removed
 
   const DEMO_CITATIONS = [
     {text:"Les personnes ultra-productives ne gèrent pas leur temps — elles le conçoivent.",context:"Distinction fondamentale entre subir et choisir son organisation"},
@@ -924,11 +929,11 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
     {text:"Chaque individu a une fenêtre de deux à quatre heures par jour où ses capacités cognitives sont au sommet.",context:"Science du rythme circadien appliquée à la productivité"},
   ]
 
-  const [url,setUrl]=useState("https://www.youtube.com/watch?v=demo123")
-  const [phase,setPhase]=useState("done")
+  const [url,setUrl]=useState("")
+  const [phase,setPhase]=useState("idle")
   const [progress,setProg]=useState(100)
   const [elapsed,setElapsed]=useState(0)
-  const [tx,setTx]=useState(DEMO_TX)
+  const [tx,setTx]=useState(null)
   const [tab,setTab]=useState("transcript")
   const [txTab,setTxTab]=useState("raw")
   const [aiOut,setAiOut]=useState(null)
@@ -948,7 +953,7 @@ Cette vidéo présente cinq habitudes partagées par les personnes les plus effi
   const [translated,setTranslated]=useState(null)
   const [transLoading,setTransLoad]=useState(false)
   const [detectedLang,setDetectedLang]=useState("Français")
-  const [autoSummary,setAutoSummary]=useState(DEMO_SUMMARY)
+  const [autoSummary,setAutoSummary]=useState(null)
   const [autoSumLoading,setAutoSumLoad]=useState(false)
   const [autoSumCopied,setAutoSumCopied]=useState(false)
   const [showPaywall,setShowPaywall]=useState(false)
@@ -1864,39 +1869,96 @@ function AdminPanel({setView,bannerConfig,setBannerConfig,maintenance,setMainten
 ═══════════════════════════════════════ */
 function AuthModal({mode,onClose,onAuth}){
   const [m,setM]=useState(mode)
-  const [e,setE]=useState("")
-  const [p,setP]=useState("")
-  const [n,setN]=useState("")
+  const [email,setEmail]=useState("")
+  const [pwd,setPwd]=useState("")
+  const [name,setName]=useState("")
+  const [loading,setLoading]=useState(false)
+  const [err,setErr]=useState("")
   const [fE,setFE]=useState(false)
   const [fP,setFP]=useState(false)
   const [fN,setFN]=useState(false)
 
   function Field({value,onChange,placeholder,type="text",focused,setFocused}){
     return(
-      <div style={{background:T.bg,border:`1.5px solid ${focused?T.text:T.border}`,borderRadius:9,display:"flex",alignItems:"center",padding:"0 12px",height:44,transition:"all 0.15s",boxShadow:focused?`0 4px 0 rgba(0,0,0,0.08)`:"none"}}>
+      <div style={{background:T.bg,border:`1.5px solid ${focused?T.text:T.border}`,borderRadius:9,display:"flex",alignItems:"center",padding:"0 12px",height:46,transition:"all 0.15s",boxShadow:focused?"0 4px 0 rgba(0,0,0,0.07)":"none"}}>
         <input value={value} onChange={ev=>onChange(ev.target.value)} placeholder={placeholder} type={type} onFocus={()=>setFocused(true)} onBlur={()=>setFocused(false)} style={{flex:1,background:"transparent",border:"none",outline:"none",color:T.text,fontSize:14,fontFamily:"'Inter',sans-serif"}}/>
       </div>
     )
   }
 
+  async function handleSubmit(){
+    if(!email||!pwd){setErr("Remplissez tous les champs");return}
+    if(pwd.length<6){setErr("Mot de passe trop court (6 min)");return}
+    setLoading(true); setErr("")
+    try{
+      let res
+      if(m==="signup"){
+        res = await sbSignUp(email,pwd,name)
+        if(res.error||res.msg){
+          const msg = res.msg||res.error?.message||"Erreur inscription"
+          // Email already exists
+          if(msg.includes("already")||msg.includes("existe")){setErr("Email déjà utilisé — connectez-vous");setM("login")}
+          else setErr(msg)
+          setLoading(false); return
+        }
+        // Create profile in DB
+        if(res.user?.id){
+          await sb("profiles",{method:"POST",body:JSON.stringify({id:res.user.id,name:name||email.split("@")[0],email,plan:"free",credits:3})})
+        }
+        toast("Compte créé ! Vérifiez votre email ✉️","success")
+        onAuth({user:res.user,token:res.access_token,name:name||email.split("@")[0]})
+      } else {
+        res = await sbSignIn(email,pwd)
+        if(res.error||!res.access_token){
+          setErr(res.error_description||res.error?.message||"Email ou mot de passe incorrect")
+          setLoading(false); return
+        }
+        // Fetch profile
+        const profile = await sb("profiles?id=eq."+res.user.id+"&select=*")
+        const userData = {user:res.user,token:res.access_token,profile:profile?.data?.[0]}
+        toast("Bienvenue sur TranscriptIA !","success")
+        onAuth(userData)
+      }
+    } catch(e){
+      setErr("Erreur réseau. Réessayez.")
+    }
+    setLoading(false)
+  }
+
   return(
     <div style={{position:"fixed",inset:0,zIndex:200,background:"rgba(0,0,0,0.5)",backdropFilter:"blur(8px)",display:"flex",alignItems:"center",justifyContent:"center",padding:"1rem",animation:"fadeIn 0.2s"}}
       onClick={ev=>ev.target===ev.currentTarget&&onClose()}>
-      <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:18,padding:"2.5rem",width:"100%",maxWidth:400,position:"relative",boxShadow:T.shadowLg,animation:"scaleIn 0.3s ease"}}>
-        <div style={{height:3,background:`linear-gradient(90deg,${T.text},#555)`,borderRadius:100,marginBottom:"2rem",marginLeft:"-2.5rem",marginRight:"-2.5rem",marginTop:"-2.5rem",borderTopLeftRadius:18,borderTopRightRadius:18}}/>
+      <div style={{background:T.bgWhite,border:`1px solid ${T.border}`,borderRadius:20,padding:"2.5rem",width:"100%",maxWidth:400,position:"relative",boxShadow:T.shadowLg,animation:"scaleIn 0.3s ease"}}>
+        <div style={{height:3,background:`linear-gradient(90deg,${T.text},#555)`,borderRadius:100,marginBottom:"2rem",marginLeft:"-2.5rem",marginRight:"-2.5rem",marginTop:"-2.5rem",borderTopLeftRadius:20,borderTopRightRadius:20}}/>
         <button onClick={onClose} style={{position:"absolute",top:18,right:18,background:"transparent",border:"none",fontSize:18,cursor:"pointer",color:T.textTer}}>✕</button>
         <Logo onClick={()=>{}}/>
         <h2 style={{fontSize:20,fontWeight:800,color:T.text,marginTop:"1.25rem",letterSpacing:-0.5}}>{m==="login"?"Bon retour !":"Créer un compte"}</h2>
-        <p style={{fontSize:12,color:T.textSec,marginTop:3,marginBottom:"1.75rem"}}>{m==="login"?"Connectez-vous à votre espace":"3 transcriptions gratuites incluses"}</p>
+        <p style={{fontSize:12,color:T.textSec,marginTop:3,marginBottom:"1.5rem"}}>{m==="login"?"Connectez-vous à votre espace":"3 transcriptions gratuites incluses"}</p>
+
+        {/* Google OAuth button */}
+        <button onClick={()=>sbGoogleLogin()} style={{fontFamily:"'Inter',sans-serif",width:"100%",height:46,background:T.bg,border:`1.5px solid ${T.border}`,borderRadius:9,fontSize:14,fontWeight:600,color:T.text,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,marginBottom:"1rem",transition:"all 0.15s"}}>
+          <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Continuer avec Google
+        </button>
+
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:"1rem"}}>
+          <div style={{flex:1,height:1,background:T.border}}/>
+          <span style={{fontSize:11,color:T.textTer}}>ou par email</span>
+          <div style={{flex:1,height:1,background:T.border}}/>
+        </div>
+
         <div style={{display:"flex",flexDirection:"column",gap:8}}>
-          {m==="signup"&&<Field value={n} onChange={setN} placeholder="Prénom" focused={fN} setFocused={setFN}/>}
-          <Field value={e} onChange={setE} placeholder="Adresse email" type="email" focused={fE} setFocused={setFE}/>
-          <Field value={p} onChange={setP} placeholder="Mot de passe" type="password" focused={fP} setFocused={setFP}/>
-          <DarkBtn full size="lg" onClick={()=>onAuth(e)} style={{marginTop:4,boxShadow:T.shadow3d}}>{m==="login"?"Se connecter →":"Créer mon compte →"}</DarkBtn>
+          {m==="signup"&&<Field value={name} onChange={setName} placeholder="Prénom (optionnel)" focused={fN} setFocused={setFN}/>}
+          <Field value={email} onChange={setEmail} placeholder="Adresse email" type="email" focused={fE} setFocused={setFE}/>
+          <Field value={pwd} onChange={setPwd} placeholder="Mot de passe (6 caractères min)" type="password" focused={fP} setFocused={setFP}/>
+          {err&&<p style={{fontSize:12,color:T.red,fontWeight:500,...mono,background:"#FEF2F2",padding:"8px 12px",borderRadius:7,border:`1px solid ${T.red}20`}}>{err}</p>}
+          <DarkBtn full size="lg" onClick={handleSubmit} disabled={loading} style={{marginTop:2,boxShadow:T.shadow3d}}>
+            {loading?<><div style={{width:14,height:14,border:"2px solid rgba(255,255,255,0.3)",borderTop:"2px solid #fff",borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/> Chargement…</> : m==="login"?"Se connecter →":"Créer mon compte →"}
+          </DarkBtn>
         </div>
         <p style={{textAlign:"center",fontSize:12,color:T.textSec,marginTop:"1.25rem"}}>
           {m==="login"?"Pas de compte ? ":"Déjà inscrit ? "}
-          <span style={{color:T.text,cursor:"pointer",fontWeight:700}} onClick={()=>setM(m==="login"?"signup":"login")}>{m==="login"?"S'inscrire gratuitement":"Se connecter"}</span>
+          <span style={{color:T.text,cursor:"pointer",fontWeight:700}} onClick={()=>{setM(m==="login"?"signup":"login");setErr("")}}>{m==="login"?"S'inscrire gratuitement":"Se connecter"}</span>
         </p>
       </div>
     </div>
@@ -2128,6 +2190,96 @@ function MaintenanceScreen({maintenance,onAdminAccess}){
   )
 }
 
+
+/* ═══════════════════════════════════════════════
+   LEGAL PAGES — KEVININDUSTRIE
+═══════════════════════════════════════════════ */
+const COMPANY = {
+  name:"KEVININDUSTRIE",siren:"932 737 992",
+  forme:"Société par Actions Simplifiée (SAS)",capital:"500 €",
+  adresse:"Paris, France",dirigeant:"Kévin Nedzvedsky",
+  email:"contact@transcriptia.app",site:"https://transcriptia.app",
+  creation:"05 septembre 2024",
+}
+const LEGAL_CONTENT = {
+  mentions:{title:"Mentions légales",sections:[
+    {h:"Éditeur du site",p:"Le site TranscriptIA est édité par KEVININDUSTRIE, Société par Actions Simplifiée (SAS) au capital de 500 €, immatriculée au Registre du Commerce et des Sociétés sous le numéro SIREN 932 737 992.
+
+Siège social : Paris, France
+Directeur de la publication : Kévin Nedzvedsky
+Contact : contact@transcriptia.app"},
+    {h:"Hébergement",p:"Le site est hébergé par Vercel Inc., 340 Pine Street Suite 701, San Francisco, CA 94104, États-Unis."},
+    {h:"Propriété intellectuelle",p:"Le contenu du site TranscriptIA est la propriété exclusive de KEVININDUSTRIE et est protégé par les lois françaises et internationales relatives à la propriété intellectuelle. Toute reproduction est interdite sans autorisation préalable."},
+    {h:"Données personnelles",p:"Conformément au RGPD, vous disposez d'un droit d'accès, de rectification et de suppression de vos données. Contact : contact@transcriptia.app"},
+  ]},
+  cgu:{title:"Conditions Générales d'Utilisation",sections:[
+    {h:"1. Objet",p:"Les présentes CGU régissent l'accès et l'utilisation du service TranscriptIA, édité par KEVININDUSTRIE. En accédant au service, vous acceptez sans réserve ces CGU."},
+    {h:"2. Description du service",p:"TranscriptIA est un service de transcription automatique de vidéos YouTube par intelligence artificielle. Le service génère une transcription textuelle et un résumé à partir de l'URL d'une vidéo YouTube publique."},
+    {h:"3. Accès au service",p:"L'accès au service est gratuit dans la limite de 3 transcriptions par jour. Au-delà, un abonnement Pro est requis (5€/mois). KEVININDUSTRIE se réserve le droit de modifier les conditions d'accès à tout moment."},
+    {h:"4. Utilisation autorisée",p:"Le service est destiné à un usage personnel et professionnel licite. Il est interdit d'utiliser TranscriptIA pour transcrire des contenus protégés sans autorisation, des contenus illicites, ou à des fins de collecte massive de données."},
+    {h:"5. Responsabilité",p:"KEVININDUSTRIE ne saurait être tenu responsable des dommages directs ou indirects résultant de l'utilisation du service ou d'une inexactitude des transcriptions générées par l'IA."},
+    {h:"6. Droit applicable",p:"Les présentes CGU sont soumises au droit français. Tout litige relève de la compétence exclusive des tribunaux compétents de Paris."},
+  ]},
+  rgpd:{title:"Politique de confidentialité",sections:[
+    {h:"1. Responsable du traitement",p:"KEVININDUSTRIE (SIREN : 932 737 992), représentée par Kévin Nedzvedsky. Contact : contact@transcriptia.app"},
+    {h:"2. Données collectées",p:"Nous collectons :
+• Données d'identification : nom, adresse email
+• Données de navigation : adresses IP, pages visitées
+• Données d'utilisation : URLs transcrites, historique
+• Données de paiement : traitées exclusivement par Stripe"},
+    {h:"3. Finalités",p:"Vos données sont utilisées pour :
+• Fournir et améliorer le service
+• Gérer votre compte et votre abonnement
+• Respecter nos obligations légales"},
+    {h:"4. Conservation",p:"Vos données sont conservées pendant la durée d'utilisation du service, puis archivées 3 ans après la fin du contrat."},
+    {h:"5. Vos droits",p:"Conformément au RGPD : droit d'accès, rectification, suppression, portabilité, limitation, opposition.
+Contact : contact@transcriptia.app
+Réclamation CNIL : www.cnil.fr"},
+    {h:"6. Cookies",p:"Nous utilisons uniquement des cookies essentiels au fonctionnement du service. Aucun cookie publicitaire ou de tracking tiers n'est utilisé."},
+    {h:"7. Sous-traitants",p:"Supabase (base de données, USA), Vercel (hébergement, USA), Stripe (paiement, USA), Anthropic (IA — transcriptions anonymisées uniquement)."},
+  ]},
+  cgv:{title:"Conditions Générales de Vente",sections:[
+    {h:"1. Vendeur",p:"KEVININDUSTRIE, SAS, SIREN 932 737 992, Paris, France. Contact : contact@transcriptia.app"},
+    {h:"2. Services proposés",p:"Abonnement Pro à 5€/mois ou 48€/an : transcriptions illimitées, résumés automatiques, export .srt et .txt, historique complet."},
+    {h:"3. Prix",p:"Les prix sont indiqués en euros. En tant qu'entreprise en phase de démarrage, KEVININDUSTRIE ne facture pas de TVA (article 293 B du CGI)."},
+    {h:"4. Paiement",p:"Le paiement est sécurisé via Stripe. Vos coordonnées bancaires ne sont jamais stockées par KEVININDUSTRIE."},
+    {h:"5. Résiliation",p:"Vous pouvez résilier votre abonnement à tout moment depuis votre tableau de bord, sans frais. La résiliation prend effet à la fin de la période en cours."},
+    {h:"6. Remboursements",p:"Aucun remboursement pour les périodes déjà consommées. En cas de problème technique imputable à KEVININDUSTRIE, un remboursement au prorata pourra être envisagé sur demande."},
+    {h:"7. Droit applicable",p:"Les présentes CGV sont soumises au droit français. En cas de litige, les tribunaux compétents de Paris seront saisis."},
+  ]},
+}
+function LegalPage({type,setView}){
+  const page=LEGAL_CONTENT[type]
+  if(!page)return null
+  return(
+    <div style={{minHeight:"100vh",background:T.bg}}>
+      <div style={{maxWidth:820,margin:"0 auto",padding:"3rem"}}>
+        <button onClick={()=>setView("landing")} style={{fontFamily:"'Inter',sans-serif",background:"transparent",border:"none",color:T.textSec,fontSize:13,cursor:"pointer",marginBottom:"2rem",display:"flex",alignItems:"center",gap:6}}>← Retour</button>
+        <div style={{marginBottom:"2.5rem",paddingBottom:"1.5rem",borderBottom:`2px solid ${T.text}`}}>
+          <p style={{fontSize:10,fontWeight:700,color:T.textTer,textTransform:"uppercase",letterSpacing:2,marginBottom:8,...mono}}>KEVININDUSTRIE · TranscriptIA</p>
+          <h1 style={{fontSize:30,fontWeight:900,color:T.text,letterSpacing:-1.5}}>{page.title}</h1>
+          <p style={{fontSize:12,color:T.textSec,marginTop:8,...mono}}>Dernière mise à jour : {new Date().toLocaleDateString("fr-FR",{year:"numeric",month:"long",day:"numeric"})}</p>
+        </div>
+        <div style={{display:"flex",flexDirection:"column",gap:28}}>
+          {page.sections.map((s,i)=>(
+            <div key={i}>
+              <h2 style={{fontSize:16,fontWeight:700,color:T.text,marginBottom:10,paddingBottom:8,borderBottom:`1px solid ${T.border}`}}>{s.h}</h2>
+              <p style={{fontSize:14,color:T.textSec,lineHeight:1.9,whiteSpace:"pre-line"}}>{s.p}</p>
+            </div>
+          ))}
+        </div>
+        <div style={{marginTop:"3rem",paddingTop:"1.5rem",borderTop:`1px solid ${T.border}`,display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:12}}>
+          <div>
+            <p style={{fontSize:12,fontWeight:700,color:T.text}}>KEVININDUSTRIE</p>
+            <p style={{fontSize:11,color:T.textTer,...mono}}>SIREN 932 737 992 · SAS · Paris</p>
+          </div>
+          <p style={{fontSize:11,color:T.textTer}}>contact@transcriptia.app</p>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 /* ═══════════════════════════════════════
    ROOT
 ═══════════════════════════════════════ */
@@ -2136,9 +2288,72 @@ export default function App(){
   const {toasts}=useToastProvider()
   const [view,setView]=useState("app")
   const [showAuth,setShowAuth]=useState(null)
-  const [isLoggedIn,setLogged]=useState(true)
-  const [isPro,setIsPro]=useState(true)
-  const [usageCount,setUsage]=useState(3)
+  const [isLoggedIn,setLogged]=useState(false)
+  const [user,setUser]=useState(null)      // {id, email, name, token}
+  const [isPro,setIsPro]=useState(false)
+  const [usageCount,setUsage]=useState(0)
+  const [authLoading,setAuthLoading]=useState(true)
+
+  // ── Session persistence ──
+  useEffect(()=>{
+    const stored = localStorage.getItem("tai_session")
+    if(stored){
+      try{
+        const sess = JSON.parse(stored)
+        // Verify token is still valid
+        sbGetUser(sess.token).then(u=>{
+          if(u&&u.id){
+            setUser(sess)
+            setLogged(true)
+            setIsPro(sess.plan==="pro")
+            setUsage(sess.transcriptions_count||0)
+            // Refresh profile from DB
+            sb("profiles?id=eq."+u.id+"&select=*").then(r=>{
+              if(r?.data?.[0]){
+                const p=r.data[0]
+                const updated={...sess,name:p.name,plan:p.plan,transcriptions_count:p.transcriptions_count,credits:p.credits}
+                setUser(updated)
+                setIsPro(p.plan==="pro")
+                setUsage(p.transcriptions_count||0)
+                localStorage.setItem("tai_session",JSON.stringify(updated))
+              }
+            })
+          } else {
+            localStorage.removeItem("tai_session")
+          }
+          setAuthLoading(false)
+        })
+      }catch{localStorage.removeItem("tai_session");setAuthLoading(false)}
+    } else {
+      setAuthLoading(false)
+    }
+    // Handle OAuth redirect
+    const hash = window.location.hash
+    if(hash.includes("access_token")){
+      const params = new URLSearchParams(hash.replace("#","?"))
+      const token = params.get("access_token")
+      if(token){
+        sbGetUser(token).then(async u=>{
+          if(u?.id){
+            // Upsert profile
+            await sb("profiles?id=eq."+u.id,{method:"GET"}).then(async r=>{
+              if(!r?.data?.length){
+                await sb("profiles",{method:"POST",body:JSON.stringify({id:u.id,name:u.user_metadata?.name||u.email?.split("@")[0],email:u.email,plan:"free",credits:3})})
+              }
+            })
+            const profile = await sb("profiles?id=eq."+u.id+"&select=*")
+            const p = profile?.data?.[0]||{}
+            const sess = {id:u.id,email:u.email,name:p.name||u.user_metadata?.name||u.email?.split("@")[0],token,plan:p.plan||"free",transcriptions_count:p.transcriptions_count||0,credits:p.credits||3}
+            localStorage.setItem("tai_session",JSON.stringify(sess))
+            setUser(sess); setLogged(true); setIsPro(sess.plan==="pro"); setUsage(sess.transcriptions_count||0)
+            window.location.hash = ""
+            toast("Connexion Google réussie !","success")
+          }
+          setAuthLoading(false)
+        })
+      }
+    }
+  },[])
   const [bannerConfig,setBannerConfig]=useState({
     enabled:true,
     text:"🎉 <strong>Offre de lancement</strong> — 50% sur le plan annuel · Code <span style=\"background:rgba(255,255,255,0.15);padding:1px 8px;border-radius:4px;font-family:'DM Mono',monospace;font-size:12px\">LAUNCH50</span>",
@@ -2154,11 +2369,7 @@ export default function App(){
     estimatedTime:"",
     allowAdmin:true
   })
-  const [transcripts,setTxList]=useState([
-    {id:1,url:"https://youtube.com/watch?v=abc",title:"5 habitudes des personnes ultra-productives",channel:"Thomas Frank — FR",duration:"14:32",date:"15/03/2025",favorite:true,tags:["Productivité","Dev perso"],shareId:"tx_001"},
-    {id:2,url:"https://youtube.com/watch?v=def",title:"Comment apprendre n'importe quoi en 20 heures",channel:"Josh Kaufman — FR",duration:"19:04",date:"12/03/2025",favorite:false,tags:["Apprentissage"],shareId:"tx_002"},
-    {id:3,url:"https://youtube.com/watch?v=ghi",title:"Le business des créateurs de contenu en 2025",channel:"Colin & Samir",duration:"42:17",date:"08/03/2025",favorite:false,tags:["Créateurs","Business"],shareId:"tx_003"},
-  ])
+  const [transcripts,setTxList]=useState([])
   const [reviews,setReviews]=useState(INITIAL_REVIEWS)
   const [logoClickCount,setLogoClickCount]=useState(0)
   const [showExitIntent,setShowExitIntent]=useState(false)
@@ -2181,7 +2392,33 @@ export default function App(){
     }
   },[isLoggedIn,exitShown])
 
-  function handleAuth(){setLogged(true);setShowAuth(null);setView("app");toast("Bienvenue sur TranscriptIA !","success")}
+  function handleAuth(userData){
+    if(!userData)return
+    const {user,token,profile,name} = userData
+    const sess = {
+      id:user?.id,
+      email:user?.email,
+      name:name||profile?.name||user?.email?.split("@")[0]||"Utilisateur",
+      token,
+      plan:profile?.plan||"free",
+      transcriptions_count:profile?.transcriptions_count||0,
+      credits:profile?.credits||3
+    }
+    localStorage.setItem("tai_session",JSON.stringify(sess))
+    setUser(sess)
+    setLogged(true)
+    setIsPro(sess.plan==="pro")
+    setUsage(sess.transcriptions_count||0)
+    setShowAuth(null)
+    navigate("app")
+  }
+  async function handleLogout(){
+    if(user?.token) await sbSignOut(user.token)
+    localStorage.removeItem("tai_session")
+    setUser(null); setLogged(false); setIsPro(false); setUsage(0)
+    navigate("landing")
+    toast("Déconnecté","info")
+  }
 
   const bannerH = bannerConfig.enabled ? 38 : 0
   const showMaintenance = maintenance.enabled && view !== "admin"
@@ -2189,18 +2426,24 @@ export default function App(){
   return(
     <div style={{fontFamily:"'Inter',sans-serif",background:T.bg,minHeight:"100vh",color:T.text,display:"flex",flexDirection:"column"}}>
       <ReadingProgress/>
-      {showMaintenance ? (
+      {authLoading?(
+        <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
+          <div style={{width:20,height:20,border:`2px solid ${T.border}`,borderTop:`2px solid ${T.text}`,borderRadius:"50%",animation:"spin 0.8s linear infinite"}}/>
+          <p style={{fontSize:13,color:T.textTer}}>Chargement…</p>
+        </div>
+      ) : showMaintenance ? (
         <MaintenanceScreen maintenance={maintenance} onAdminAccess={()=>setView("admin")}/>
       ) : (
         <>
           <AnnouncementBanner config={bannerConfig}/>
-          {view!=="admin"&&<Nav view={view} setView={setView} isLoggedIn={isLoggedIn} setShowAuth={setShowAuth} isPro={isPro} logoClickCount={logoClickCount} setLogoClickCount={setLogoClickCount}/>}
-          {view==="profile"  &&<ProfilePage setView={setView} isPro={isPro} usageCount={usageCount}/>}
+          {view!=="admin"&&<Nav view={view} setView={navigate} isLoggedIn={isLoggedIn} setShowAuth={setShowAuth} isPro={isPro} logoClickCount={logoClickCount} setLogoClickCount={setLogoClickCount} user={user} onLogout={handleLogout}/>}
+          {view==="profile"  &&<ProfilePage setView={navigate} isPro={isPro} usageCount={usageCount} user={user} onLogout={handleLogout}/>}
           {view==="landing"  &&<Landing  setView={setView} setShowAuth={setShowAuth} usageCount={usageCount} isPro={isPro} reviews={reviews} setReviews={setReviews} adminCounterMin={counterMin} adminCounterMax={counterMax}/>}
           {view==="app"      &&<AppView  usageCount={usageCount} setUsageCount={setUsage} isPro={isPro} setShowAuth={setShowAuth} transcripts={transcripts} setTranscripts={setTxList}/>}
           {view==="dashboard"&&<Dashboard usageCount={usageCount} isPro={isPro} setIsPro={setIsPro} transcripts={transcripts} setTranscripts={setTxList} setView={setView}/>}
           {view==="status"   &&<StatusPage setView={setView}/>}
           {view==="admin"    &&<AdminPanel setView={setView} bannerConfig={bannerConfig} setBannerConfig={setBannerConfig} maintenance={maintenance} setMaintenance={setMaintenance} promoCodes={promoCodes} setPromoCodes={setPromoCodes} counterMin={counterMin} setCounterMin={setCounterMin} counterMax={counterMax} setCounterMax={setCounterMax}/>}
+          {["mentions","cgu","rgpd","cgv"].includes(view)&&<LegalPage type={view} setView={navigate}/>}
           {showAuth&&<AuthModal mode={showAuth} onClose={()=>setShowAuth(null)} onAuth={handleAuth}/>}
           {showExitIntent&&!isLoggedIn&&<ExitIntentPopup onClose={()=>setShowExitIntent(false)} onSignup={()=>{setShowExitIntent(false);setShowAuth("signup")}}/>}
         </>
